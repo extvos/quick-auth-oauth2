@@ -9,6 +9,10 @@
 ```ini
 quick.auth.wechat.app-id=xxxx
 quick.auth.wechat.app-secret=xxxx
+quick.auth.wechat.response-type=code
+quick.auth.wechat.scope:snsapi_userinfo
+quick.auth.wechat.grant-type:authorization_code
+quick.auth.wechat.token:quick-wechat
 ```
 
 
@@ -32,6 +36,23 @@ quick.auth.oauth2.scope=xxx
 public interface OAuthProvider {
 
     /**
+     * The following constants are for raw map conversion, provider processed extra map info should convert the keys.
+     */
+    String NICK_NAME_KEY = "nickname";
+    String AVATAR_URL_KEY = "avatarUrl";
+    String OPEN_ID_KEY = "openid";
+    String UNION_ID_KEY = "unionid";
+    String SESSION_KEY = "session_key";
+    String LANGUAGE_KEY = "language";
+    String COUNTRY_KEY = "country";
+    String COUNTRY_CODE_KEY = "countryCode";
+    String PROVINCE_KEY = "province";
+    String CITY_KEY = "city";
+    String GENDER_KEY = "gender";
+    String PHONE_NUMBER_KEY = "phoneNumber";
+
+
+    /**
      * A unique identifier for service provider
      *
      * @return string of slug
@@ -40,35 +61,65 @@ public interface OAuthProvider {
 
     /**
      * get provider name
+     *
      * @return name as String
      */
     String getName();
 
     /**
      * get if provider support in page redirect.
+     *
      * @return true if supported
      */
-    default boolean redirectSupported(){ return false; };
+    default boolean redirectSupported() {
+        return false;
+    }
+
+    ;
+
+    /**
+     * provider notification
+     *
+     * @param params params from request
+     * @param body   request body from request
+     * @return result
+     * @throws RestletException if errors
+     */
+    Object notify(Map<String, Object> params, byte[] body) throws RestletException;
 
     /**
      * get code url for generate QrCode or redirect user browser
      *
-     * @param state a string to identify state of code url
+     * @param state       a string to identify state of code url
      * @param redirectUri a string to give the redirectUri
      * @return a string of url.
      * @throws RestletException if errors
      */
-    String getCodeUrl(String state,String redirectUri) throws RestletException;
-
+    String getCodeUrl(String state, String redirectUri) throws RestletException;
 
     /**
-     * Get access token info via code
-     * @param code code returned by provider
-     * @return map with results.
-     * @throws RestletException when errors
+     * run authorization with given code
+     *
+     * @param code      authorized code from provider
+     * @param state     session state identity
+     * @param via       parameter
+     * @param authState previous state if already exists
+     * @return updated authState or new
+     * @throws RestletException when error
      */
-    Map<String,Object> getAccessToken(String code) throws RestletException;
+    OAuthState authorized(String code, String state, String via, OAuthState authState) throws RestletException;
+
+    /**
+     * authorization updates for special situation
+     *
+     * @param params    mapped params
+     * @param authState previous state if already exists
+     * @return updated authState or new
+     * @throws RestletException RestletException when error
+     */
+    OAuthState authorizeUpdate(Map<String, Object> params, OAuthState authState) throws RestletException;
 }
+
 ```
 
 
@@ -423,7 +474,6 @@ public interface OAuthProvider {
 
 ### 第三方登录回调
 
-
 **接口地址**:`/auth/oauth2/{provider}/authorized`
 
 
@@ -436,7 +486,8 @@ public interface OAuthProvider {
 **响应数据类型**:`*/*`
 
 
-**接口描述**:
+**接口描述**:<p>via should be &#39;SESSIONKEY&#39; when calling via Session Key mode</p>
+
 
 
 **请求参数**:
@@ -449,7 +500,8 @@ public interface OAuthProvider {
 | -------- | -------- | -------- | -------- | -------- | ------ |
 | code     | code     | query    | true     | string   |        |
 | provider | provider | path     | true     | string   |        |
-| state    | state    | query    | true     | string   |        |
+| state    | state    | query    | false    | string   |        |
+| via      | via      | query    | false    | string   |        |
 
 
 **响应状态**:
@@ -466,20 +518,18 @@ public interface OAuthProvider {
 **响应参数**:
 
 
-| 参数名称             | 参数说明 | 类型           | schema         |
-| -------------------- | -------- | -------------- | -------------- |
-| code                 |          | integer(int32) | integer(int32) |
-| count                |          | integer(int64) | integer(int64) |
-| data                 |          | OAuthResult    | OAuthResult    |
-| &emsp;&emsp;openId   |          | string         |                |
-| &emsp;&emsp;session  |          | string         |                |
-| &emsp;&emsp;status   |          | integer(int32) |                |
-| &emsp;&emsp;username |          | string         |                |
-| error                |          | string         |                |
-| msg                  |          | string         |                |
-| page                 |          | integer(int64) | integer(int64) |
-| pageSize             |          | integer(int64) | integer(int64) |
-| total                |          | integer(int64) | integer(int64) |
+| 参数名称              | 参数说明 | 类型           | schema         |
+| --------------------- | -------- | -------------- | -------------- |
+| code                  |          | integer(int32) | integer(int32) |
+| count                 |          | integer(int64) | integer(int64) |
+| data                  |          | OAuthResult    | OAuthResult    |
+| &emsp;&emsp;extraInfo |          | object         |                |
+| &emsp;&emsp;openId    |          | string         |                |
+| &emsp;&emsp;session   |          | string         |                |
+| &emsp;&emsp;status    |          | integer(int32) |                |
+| &emsp;&emsp;username  |          | string         |                |
+| error                 |          | string         |                |
+| msg                   |          | string         |                |
 
 
 **响应示例**:
@@ -488,6 +538,7 @@ public interface OAuthProvider {
 	"code": 0,
 	"count": 0,
 	"data": {
+		"extraInfo": {},
 		"openId": "",
 		"session": "",
 		"status": 0,
@@ -495,8 +546,88 @@ public interface OAuthProvider {
 	},
 	"error": "",
 	"msg": "",
-	"page": 0,
-	"pageSize": 0,
-	"total": 0
+}
+```
+
+
+
+### 第三方会话更新
+
+
+**接口地址**:`/auth/oauth2/{provider}/session-update`
+
+
+**请求方式**:`POST`
+
+
+**请求数据类型**:`application/json`
+
+
+**响应数据类型**:`*/*`
+
+
+**接口描述**:<p>在第三方认证调用authorized接口没有完成登录时，通过更新数据完成注册登录流程，目前用于小程序认证登录</p>
+
+
+
+**请求参数**:
+
+
+**请求参数**:
+
+
+| 参数名称  | 参数说明  | 请求类型 | 是否必须 | 数据类型 | schema |
+| --------- | --------- | -------- | -------- | -------- | ------ |
+| provider  | provider  | path     | true     | string   |        |
+
+支持以`form`以及`JSON`的方式提交数据，根据`provider`的不同提交不同的数据。 
+微信小程序登录则需提供:
+- `raw` 加密数据
+- `iv` AES加密的初始向量数据
+- `signature` 数据签名
+
+**响应状态**:
+
+
+| 状态码 | 说明         | schema              |
+| ------ | ------------ | ------------------- |
+| 200    | OK           | Result«OAuthResult» |
+| 201    | Created      |                     |
+| 401    | Unauthorized |                     |
+| 403    | Forbidden    |                     |
+| 404    | Not Found    |                     |
+
+
+**响应参数**:
+
+
+| 参数名称              | 参数说明 | 类型           | schema         |
+| --------------------- | -------- | -------------- | -------------- |
+| code                  |          | integer(int32) | integer(int32) |
+| count                 |          | integer(int64) | integer(int64) |
+| data                  |          | OAuthResult    | OAuthResult    |
+| &emsp;&emsp;extraInfo |          | object         |                |
+| &emsp;&emsp;openId    |          | string         |                |
+| &emsp;&emsp;session   |          | string         |                |
+| &emsp;&emsp;status    |          | integer(int32) |                |
+| &emsp;&emsp;username  |          | string         |                |
+| error                 |          | string         |                |
+| msg                   |          | string         |                |
+
+
+**响应示例**:
+```javascript
+{
+	"code": 0,
+	"count": 0,
+	"data": {
+		"extraInfo": {},
+		"openId": "",
+		"session": "",
+		"status": 0,
+		"username": ""
+	},
+	"error": "",
+	"msg": "",
 }
 ```

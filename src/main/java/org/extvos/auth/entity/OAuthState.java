@@ -10,18 +10,26 @@ import java.util.Map;
  */
 public class OAuthState implements Serializable {
 
-    private String sessionId;
-
     /**
      * Status of current session
      * -1: failed
      * 0: initialized, nothing else was done
      * 1: oauth redirect(or QR-Code scanned and accessed)
-     * 2: authorized accepted
-     * 3: access token acquired
-     * 4: extra info acquired
+     * 2: authorized accepted, waiting for openid.
+     * 3: access token acquired, openid presented.
+     * 4: user info acquired
      * 5: login finished
      */
+    public static final int FAILED = -1;
+    public static final int INITIALIZED = 0;
+    public static final int REDIRECTED = 1;
+    public static final int ACCEPTED = 2;
+    public static final int ID_PRESENTED = 3;
+    public static final int INFO_PRESENTED = 4;
+    public static final int LOGGED_IN = 5;
+
+    private String sessionId;
+
     private int status;
 
     private UserInfo userInfo;
@@ -32,14 +40,22 @@ public class OAuthState implements Serializable {
 
     private String openId;
 
+    private String sessionKey;
+
     private Map<String, Object> extraInfo;
+
+    private String error;
 
     public OAuthState(String sessId) {
         sessionId = sessId;
     }
 
     public OAuthResult asResult() {
-        return new OAuthResult(sessionId, userInfo == null ? "" : userInfo.getUsername(), openId, status);
+        OAuthResult ret = new OAuthResult(userInfo == null ? null : userInfo.getId(), sessionId, userInfo == null ? "" : userInfo.getUsername(), openId, status);
+        if (extraInfo != null) {
+            ret.setExtraInfo(extraInfo);
+        }
+        return ret;
     }
 
     public String getSessionId() {
@@ -96,5 +112,21 @@ public class OAuthState implements Serializable {
 
     public void setFailureUri(String failureUri) {
         this.failureUri = failureUri;
+    }
+
+    public String getSessionKey() {
+        return sessionKey;
+    }
+
+    public void setSessionKey(String sessionKey) {
+        this.sessionKey = sessionKey;
+    }
+
+    public String getError() {
+        return error;
+    }
+
+    public void setError(String error) {
+        this.error = error;
     }
 }

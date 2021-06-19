@@ -1,5 +1,6 @@
 package org.extvos.auth.service.standard;
 
+import org.extvos.auth.entity.OAuthState;
 import org.extvos.auth.service.OAuthProvider;
 import org.extvos.restlet.Assert;
 import org.extvos.restlet.exception.RestletException;
@@ -71,7 +72,13 @@ public class StandardOAuthServiceProvider implements OAuthProvider {
     }
 
     @Override
-    public Map<String, Object> getAccessToken(String code) throws RestletException {
+    public OAuthState authorized(String code, String state, String via, OAuthState authState) throws RestletException {
         return null;
     }
+
+    @Override
+    public OAuthState authorizeUpdate(Map<String, Object> params, OAuthState authState) throws RestletException {
+        return null;
+    }
+
 }
