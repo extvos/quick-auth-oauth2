@@ -1,7 +1,7 @@
 package org.extvos.auth.service;
 
 /**
- * @author shenmc
+ * @author Mingcai SHEN
  */
 public interface ProviderService {
     /**

@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
- * @author shenmc
+ * @author Mingcai SHEN
  */
 @Service
 public class ProviderServiceImpl implements ProviderService {

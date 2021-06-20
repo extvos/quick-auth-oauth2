@@ -7,7 +7,7 @@ import org.extvos.auth.entity.OAuthState;
 import java.time.Duration;
 
 /**
- * @author shenmc
+ * @author Mingcai SHEN
  */
 public class StateServiceImpl implements StateService {
 

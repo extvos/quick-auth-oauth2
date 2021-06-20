@@ -6,7 +6,7 @@ import org.extvos.restlet.exception.RestletException;
 import java.util.Map;
 
 /**
- * @author shenmc
+ * @author Mingcai SHEN
  */
 public interface OAuthProvider {
 

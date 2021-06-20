@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * @author shenmc
+ * @author Mingcai SHEN
  */
 @Configuration
 public class OAuthConfig {

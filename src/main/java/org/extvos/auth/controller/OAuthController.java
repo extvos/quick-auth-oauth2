@@ -41,7 +41,7 @@ import java.util.*;
  * Procedure 2:
  * ( Browser    ) URL -> Access URL -> Redirect to OAuth2 Login URL -> Authorized URI -> Login Process -> Login
  *
- * @author shenmc
+ * @author Mingcai SHEN
  */
 @Api(tags = {"用户认证"})
 @RestController

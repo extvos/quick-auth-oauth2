@@ -4,7 +4,7 @@ import org.extvos.auth.service.QuickFilterCustomizer;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * @author shenmc
+ * @author Mingcai SHEN
  */
 @Configuration
 public class OAuthFilterCustomizer implements QuickFilterCustomizer {

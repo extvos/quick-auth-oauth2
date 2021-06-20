@@ -14,7 +14,7 @@ import java.net.URLEncoder;
 import java.util.Map;
 
 /**
- * @author shenmc
+ * @author Mingcai SHEN
  */
 @Service
 public class StandardOAuthServiceProvider implements OAuthProvider {

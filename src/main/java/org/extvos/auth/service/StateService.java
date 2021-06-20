@@ -4,7 +4,7 @@ import org.extvos.auth.entity.OAuthState;
 import org.extvos.restlet.exception.RestletException;
 
 /**
- * @author shenmc
+ * @author Mingcai SHEN
  */
 public interface StateService {
     /**

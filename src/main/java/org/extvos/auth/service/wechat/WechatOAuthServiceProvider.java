@@ -27,7 +27,7 @@ import java.security.Security;
 import java.util.*;
 
 /**
- * @author shenmc
+ * @author Mingcai SHEN
  */
 @Service
 public class WechatOAuthServiceProvider implements OAuthProvider {
