@@ -1,4 +1,4 @@
-package org.extvos.auth.service.wechat;
+package plus.extvos.auth.service.wechat;
 
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
@@ -6,11 +6,11 @@ import cn.hutool.http.HttpStatus;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.extvos.auth.entity.OAuthState;
-import org.extvos.auth.service.OAuthProvider;
-import org.extvos.common.utils.QuickHash;
-import org.extvos.restlet.Assert;
-import org.extvos.restlet.exception.RestletException;
+import plus.extvos.auth.entity.OAuthState;
+import plus.extvos.auth.service.OAuthProvider;
+import plus.extvos.common.utils.QuickHash;
+import plus.extvos.restlet.Assert;
+import plus.extvos.restlet.exception.RestletException;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

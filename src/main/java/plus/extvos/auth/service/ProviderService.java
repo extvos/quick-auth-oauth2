@@ -1,4 +1,4 @@
-package org.extvos.auth.service;
+package plus.extvos.auth.service;
 
 /**
  * @author Mingcai SHEN

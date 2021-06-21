@@ -1,4 +1,4 @@
-package org.extvos.auth.service.standard;
+package plus.extvos.auth.service.standard;
 
 
 import org.springframework.beans.factory.annotation.Value;

@@ -1,7 +1,7 @@
-package org.extvos.auth.config;
+package plus.extvos.auth.config;
 
-import org.extvos.auth.service.StateService;
-import org.extvos.auth.service.StateServiceImpl;
+import plus.extvos.auth.service.StateService;
+import plus.extvos.auth.service.StateServiceImpl;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -12,7 +12,7 @@ import springfox.documentation.spring.web.plugins.Docket;
 /**
  * @author Mingcai SHEN
  */
-@ComponentScan("org.extvos.auth")
+@ComponentScan("plus.extvos.auth")
 public class AuthOAuth2AutoConfigure {
     @Bean
     @ConditionalOnMissingBean(StateService.class)

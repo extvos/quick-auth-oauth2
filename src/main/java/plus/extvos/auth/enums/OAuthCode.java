@@ -1,6 +1,6 @@
-package org.extvos.auth.enums;
+package plus.extvos.auth.enums;
 
-import org.extvos.restlet.Code;
+import plus.extvos.restlet.Code;
 
 /**
  * @author Mingcai SHEN

@@ -1,8 +1,8 @@
-package org.extvos.auth.service;
+package plus.extvos.auth.service;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import org.extvos.auth.entity.OAuthState;
+import plus.extvos.auth.entity.OAuthState;
 
 import java.time.Duration;
 

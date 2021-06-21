@@ -1,6 +1,6 @@
-package org.extvos.auth.config;
+package plus.extvos.auth.config;
 
-import org.extvos.auth.service.QuickFilterCustomizer;
+import plus.extvos.auth.service.QuickFilterCustomizer;
 import org.springframework.context.annotation.Configuration;
 
 /**

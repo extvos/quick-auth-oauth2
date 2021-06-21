@@ -30,7 +30,7 @@ quick.auth.oauth2.scope=xxx
 
 ## 扩展新的登录方式
 
-增加新的登录方式支持，可以通过注入Bean的方式实现。 注入实现了接口`org.extvos.auth.service.OAuthProvider`的Bean，系统即可获取和使用到该登录方式。
+增加新的登录方式支持，可以通过注入Bean的方式实现。 注入实现了接口`plus.extvos.auth.service.OAuthProvider`的Bean，系统即可获取和使用到该登录方式。
 
 ```java
 public interface OAuthProvider {

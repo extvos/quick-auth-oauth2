@@ -1,7 +1,7 @@
-package org.extvos.auth.service;
+package plus.extvos.auth.service;
 
-import org.extvos.auth.entity.OAuthState;
-import org.extvos.restlet.exception.RestletException;
+import plus.extvos.auth.entity.OAuthState;
+import plus.extvos.restlet.exception.RestletException;
 
 /**
  * @author Mingcai SHEN

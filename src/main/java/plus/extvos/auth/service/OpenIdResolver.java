@@ -1,7 +1,7 @@
-package org.extvos.auth.service;
+package plus.extvos.auth.service;
 
-import org.extvos.auth.dto.UserInfo;
-import org.extvos.restlet.exception.RestletException;
+import plus.extvos.auth.dto.UserInfo;
+import plus.extvos.restlet.exception.RestletException;
 
 import java.io.Serializable;
 import java.util.Map;

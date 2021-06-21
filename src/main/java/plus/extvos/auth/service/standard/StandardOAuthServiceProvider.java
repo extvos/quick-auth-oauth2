@@ -1,9 +1,9 @@
-package org.extvos.auth.service.standard;
+package plus.extvos.auth.service.standard;
 
-import org.extvos.auth.entity.OAuthState;
-import org.extvos.auth.service.OAuthProvider;
-import org.extvos.restlet.Assert;
-import org.extvos.restlet.exception.RestletException;
+import plus.extvos.auth.entity.OAuthState;
+import plus.extvos.auth.service.OAuthProvider;
+import plus.extvos.restlet.Assert;
+import plus.extvos.restlet.exception.RestletException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
