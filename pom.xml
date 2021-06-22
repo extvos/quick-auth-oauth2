@@ -7,7 +7,7 @@
     <artifactId>quick-auth-oauth2</artifactId>
     <name>quick-auth-oauth2</name>
     <description>基于OAuth2的用户认证</description>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -82,19 +82,19 @@
         <dependency>
             <groupId>io.github.extvos</groupId>
             <artifactId>quick-lib-common</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>1.0.0</version>
         </dependency>
 
         <dependency>
             <groupId>io.github.extvos</groupId>
             <artifactId>quick-lib-restlet</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>1.0.0</version>
         </dependency>
 
         <dependency>
             <groupId>io.github.extvos</groupId>
             <artifactId>quick-auth-base</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>1.0.0</version>
         </dependency>
 
 
