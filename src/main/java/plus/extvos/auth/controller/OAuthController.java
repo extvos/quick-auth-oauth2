@@ -296,7 +296,7 @@ public class OAuthController {
         Serializable currentUserId = null;
         if (authState.getUserInfo() != null) {
             currentUsername = authState.getUserInfo().getUsername();
-            currentUserId = authState.getUserInfo().getId();
+            currentUserId = authState.getUserInfo().getUserId();
         }
         Assert.notEmpty(authState.getOpenId(), RestletException.serviceUnavailable("openid not provided"));
         Map<String, Object> extraInfo = authState.getExtraInfo();
@@ -320,8 +320,8 @@ public class OAuthController {
                 throw RestletException.forbidden("auto register openid '" + openId + "' failed.");
             }
         } else if (Validator.notEmpty(extraInfo)) {
-            log.debug("authorized:> userInfo of {} resolved as {}, try to update...", openId, userInfo.getId());
-            userInfo = openidResolver.update(provider, openId, userInfo.getId(), extraInfo);
+            log.debug("authorized:> userInfo of {} resolved as {}, try to update...", openId, userInfo.getUserId());
+            userInfo = openidResolver.update(provider, openId, userInfo.getUserId(), extraInfo);
         }
         authState.setUserInfo(userInfo);
         authState.setStatus(OAuthState.INFO_PRESENTED);
@@ -407,7 +407,7 @@ public class OAuthController {
         // userInfo == null ? authState.getExtraInfo() : userInfo.getExtraInfo();
 
         if (authState.getStatus() >= OAuthState.LOGGED_IN) {
-            openidResolver.update(provider, authState.getOpenId(), authState.getUserInfo() == null ? null : authState.getUserInfo().getId(), extraInfo);
+            openidResolver.update(provider, authState.getOpenId(), authState.getUserInfo() == null ? null : authState.getUserInfo().getUserId(), extraInfo);
             return Result.data(authState.asResult()).success();
         }
         // TODO: register user .... ???
@@ -445,7 +445,7 @@ public class OAuthController {
             }
         } else {
             log.debug("registerSession:> resolved used: {}, update ...", userInfo.getUsername());
-            userInfo = openidResolver.update(provider, authState.getOpenId(), userInfo.getId(), extraInfo);
+            userInfo = openidResolver.update(provider, authState.getOpenId(), userInfo.getUserId(), extraInfo);
         }
         if (userInfo.getExtraInfo() != null) {
             extraInfo.putAll(userInfo.getExtraInfo());

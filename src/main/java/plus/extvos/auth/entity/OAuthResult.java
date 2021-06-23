@@ -7,8 +7,8 @@ import java.util.Map;
  * @author Mingcai SHEN
  */
 public class OAuthResult {
-    private Serializable id;
     private String session;
+    private Serializable userId;
     private String username;
     private String openId;
     private Map<String, Object> extraInfo;
@@ -50,16 +50,16 @@ public class OAuthResult {
         this.status = status;
     }
 
-    public Serializable getId() {
-        return id;
+    public Serializable getUserId() {
+        return userId;
     }
 
-    public void setId(Serializable id) {
-        this.id = id;
+    public void setUserId(Serializable userId) {
+        this.userId = userId;
     }
 
     public OAuthResult(Serializable id, String session, String username, String openId, int status) {
-        this.id = id;
+        this.userId = id;
         this.session = session;
         this.username = username;
         this.openId = openId;

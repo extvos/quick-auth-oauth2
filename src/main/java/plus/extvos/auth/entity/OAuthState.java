@@ -51,7 +51,7 @@ public class OAuthState implements Serializable {
     }
 
     public OAuthResult asResult() {
-        OAuthResult ret = new OAuthResult(userInfo == null ? null : userInfo.getId(), sessionId, userInfo == null ? "" : userInfo.getUsername(), openId, status);
+        OAuthResult ret = new OAuthResult(userInfo == null ? null : userInfo.getUserId(), sessionId, userInfo == null ? "" : userInfo.getUsername(), openId, status);
         if (extraInfo != null) {
             ret.setExtraInfo(extraInfo);
         }
