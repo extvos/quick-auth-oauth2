@@ -31,6 +31,14 @@ public class OAuthInfo {
         this.openId = openId;
     }
 
+    public OAuthInfo(Serializable id, Serializable userId, String provider, String openId, Map<String, Object> extraInfo) {
+        this.id = id;
+        this.userId = userId;
+        this.provider = provider;
+        this.openId = openId;
+        this.extraInfo = extraInfo;
+    }
+
     public Serializable getId() {
         return id;
     }

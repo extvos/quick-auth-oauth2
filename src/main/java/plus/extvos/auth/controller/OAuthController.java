@@ -1,6 +1,7 @@
 package plus.extvos.auth.controller;
 
 import plus.extvos.auth.config.QuickAuthConfig;
+import plus.extvos.auth.dto.OAuthInfo;
 import plus.extvos.auth.dto.UserInfo;
 import plus.extvos.auth.dto.OAuthResult;
 import plus.extvos.auth.dto.OAuthState;
@@ -304,26 +305,31 @@ public class OAuthController {
         authState.setOpenId(openId);
         authState.setStatus(OAuthState.ID_PRESENTED);
         stateService.put(authState.getSessionId(), authState);
-        UserInfo userInfo = openidResolver.resolve(provider, openId, currentUserId, extraInfo);
-        if (null == userInfo) {
+        OAuthInfo authInfo = openidResolver.resolve(provider, openId, currentUserId, extraInfo);
+        if (null == authInfo) {
             if (!autoRegister) {
-                log.debug("authorized:> userInfo of {} not resolved, auto register disabled.", openId);
+                log.debug("authorized:> authInfo of {} not resolved, auto register disabled.", openId);
                 return Result.data(authState.asResult()).success();
             }
             if (Validator.notEmpty(extraInfo)) {
-                userInfo = openidResolver.register(provider, openId, currentUsername, null, extraInfo);
-                authState.setExtraInfo(userInfo.getExtraInfo());
+                authInfo = openidResolver.register(provider, openId, currentUsername, null, extraInfo);
+                authState.setExtraInfo(authInfo.getExtraInfo());
             } else {
                 return Result.data(authState.asResult()).success();
             }
-            if (null == userInfo) {
-                throw RestletException.forbidden("auto register openid '" + openId + "' failed.");
-            }
+//            if (null == authInfo) {
+//                throw RestletException.forbidden("auto register openid '" + openId + "' failed.");
+//            }
         } else if (Validator.notEmpty(extraInfo)) {
-            log.debug("authorized:> userInfo of {} resolved as {}, try to update...", openId, userInfo.getUserId());
-            userInfo = openidResolver.update(provider, openId, userInfo.getUserId(), extraInfo);
+            log.debug("authorized:> userInfo of {} resolved as {}, try to update...", openId, authInfo.getUserId());
+            authInfo = openidResolver.update(provider, openId, authInfo.getUserId(), extraInfo);
         }
+        UserInfo userInfo = quickAuthService.getUserById(authInfo.getUserId(),true);
+        userInfo.setProvider(provider);
+        userInfo.setOpenId(authInfo.getOpenId());
+        userInfo.setExtraInfo(authInfo.getExtraInfo());
         authState.setUserInfo(userInfo);
+        authState.setAuthInfo(authInfo);
         authState.setStatus(OAuthState.INFO_PRESENTED);
         stateService.put(authState.getSessionId(), authState);
         if (quickAuthConfig.isPhoneRequired() && Validator.isEmpty(userInfo.getCellphone())) {
@@ -337,7 +343,7 @@ public class OAuthController {
             try {
                 subject.login(tk);
                 authState.setStatus(OAuthState.LOGGED_IN);
-                authState.setExtraInfo(userInfo.getExtraInfo());
+                authState.setExtraInfo(authInfo.getExtraInfo());
                 stateService.put(authState.getSessionId(), authState);
                 return Result.data(authState.asResult()).success();
             } catch (Exception e) {
@@ -403,11 +409,11 @@ public class OAuthController {
 //        log.debug("registerSession:> rawMap = {}", rawMap);
 
         UserInfo userInfo = authState.getUserInfo();
+        OAuthInfo authInfo = authState.getAuthInfo();
         Map<String, Object> extraInfo = authState.getExtraInfo();
-        // userInfo == null ? authState.getExtraInfo() : userInfo.getExtraInfo();
 
         if (authState.getStatus() >= OAuthState.LOGGED_IN) {
-            openidResolver.update(provider, authState.getOpenId(), authState.getUserInfo() == null ? null : authState.getUserInfo().getUserId(), extraInfo);
+            openidResolver.update(provider, authState.getOpenId(), authInfo == null ? null : authInfo.getUserId(), extraInfo);
             return Result.data(authState.asResult()).success();
         }
         // TODO: register user .... ???
@@ -415,14 +421,18 @@ public class OAuthController {
         authState.setStatus(OAuthState.INFO_PRESENTED);
         stateService.put(authState.getSessionId(), authState);
 
+        // get userInfo by openId if userInfo not presented
+        if (null == authInfo) {
+            authInfo = openidResolver.resolve(provider, authState.getOpenId(), null, extraInfo);
+        }
+
+        if(null == userInfo && null != authInfo){
+            userInfo = quickAuthService.getUserById(authInfo.getUserId(),true);
+        }
+
         // get userInfo by phone number if userInfo not presented and phone is ready
         if (null == userInfo && Validator.notEmpty(extraInfo.getOrDefault(OAuthProvider.PHONE_NUMBER_KEY, "").toString())) {
             userInfo = quickAuthService.getUserByPhone(extraInfo.get(OAuthProvider.PHONE_NUMBER_KEY).toString(), false);
-        }
-
-        // get userInfo by openId if userInfo not presented
-        if (null == userInfo) {
-            userInfo = openidResolver.resolve(provider, authState.getOpenId(), null, extraInfo);
         }
 
         if (quickAuthConfig.isPhoneRequired()) {
@@ -441,16 +451,18 @@ public class OAuthController {
 //                return Result.data(authState.asResult()).success();
             } else {
                 log.debug("registerSession:> auto register user ...");
-                userInfo = openidResolver.register(provider, authState.getOpenId(), username, password, extraInfo);
+                authInfo = openidResolver.register(provider, authState.getOpenId(), username, password, extraInfo);
+                userInfo = quickAuthService.getUserById(authInfo.getUserId(),true);
             }
         } else {
             log.debug("registerSession:> resolved used: {}, update ...", userInfo.getUsername());
-            userInfo = openidResolver.update(provider, authState.getOpenId(), userInfo.getUserId(), extraInfo);
+            authInfo = openidResolver.update(provider, authState.getOpenId(), userInfo.getUserId(), extraInfo);
         }
-        if (userInfo.getExtraInfo() != null) {
-            extraInfo.putAll(userInfo.getExtraInfo());
+        if (authInfo.getExtraInfo() != null) {
+            extraInfo.putAll(authInfo.getExtraInfo());
         }
         authState.setUserInfo(userInfo);
+        authState.setAuthInfo(authInfo);
         authState.setExtraInfo(extraInfo);
 
         // trying to login

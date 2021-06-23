@@ -30,6 +30,8 @@ public class OAuthState implements Serializable {
 
     private int status;
 
+    private OAuthInfo authInfo;
+
     private UserInfo userInfo;
 
     private String redirectUri;
@@ -37,6 +39,10 @@ public class OAuthState implements Serializable {
     private String failureUri;
 
     private String openId;
+
+    private String token;
+
+    private String refreshToken;
 
     private String sessionKey;
 
@@ -80,6 +86,15 @@ public class OAuthState implements Serializable {
         this.userInfo = userInfo;
     }
 
+
+    public OAuthInfo getAuthInfo() {
+        return authInfo;
+    }
+
+    public void setAuthInfo(OAuthInfo authInfo) {
+        this.authInfo = authInfo;
+    }
+
     public String getOpenId() {
         return openId;
     }
@@ -118,6 +133,22 @@ public class OAuthState implements Serializable {
 
     public void setSessionKey(String sessionKey) {
         this.sessionKey = sessionKey;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 
     public String getError() {
