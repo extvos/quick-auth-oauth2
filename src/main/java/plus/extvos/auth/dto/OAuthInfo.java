@@ -1,9 +1,10 @@
-package plus.extvos.auth.entity;
+package plus.extvos.auth.dto;
 
 import java.io.Serializable;
 import java.util.Map;
 
 /**
+ * Open Account info when user try to login via OAuth
  * @author shenmc
  */
 public class OAuthInfo {
@@ -68,5 +69,12 @@ public class OAuthInfo {
 
     public void setExtraInfo(Map<String, Object> extraInfo) {
         this.extraInfo = extraInfo;
+    }
+
+    public UserInfo buildUserInfo(String username, String password, String cellphone) {
+        UserInfo ui = new UserInfo(userId,username,password, cellphone,extraInfo);
+        ui.setProvider(provider);
+        ui.setOpenId(openId);
+        return ui;
     }
 }

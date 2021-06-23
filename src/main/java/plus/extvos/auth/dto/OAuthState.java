@@ -1,6 +1,4 @@
-package plus.extvos.auth.entity;
-
-import plus.extvos.auth.dto.UserInfo;
+package plus.extvos.auth.dto;
 
 import java.io.Serializable;
 import java.util.Map;

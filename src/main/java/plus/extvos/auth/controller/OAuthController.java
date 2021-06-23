@@ -2,8 +2,8 @@ package plus.extvos.auth.controller;
 
 import plus.extvos.auth.config.QuickAuthConfig;
 import plus.extvos.auth.dto.UserInfo;
-import plus.extvos.auth.entity.OAuthResult;
-import plus.extvos.auth.entity.OAuthState;
+import plus.extvos.auth.dto.OAuthResult;
+import plus.extvos.auth.dto.OAuthState;
 import plus.extvos.auth.service.*;
 import plus.extvos.auth.shiro.QuickToken;
 import plus.extvos.common.Validator;

@@ -6,7 +6,7 @@ import cn.hutool.http.HttpStatus;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import plus.extvos.auth.entity.OAuthState;
+import plus.extvos.auth.dto.OAuthState;
 import plus.extvos.auth.service.OAuthProvider;
 import plus.extvos.common.utils.QuickHash;
 import plus.extvos.restlet.Assert;

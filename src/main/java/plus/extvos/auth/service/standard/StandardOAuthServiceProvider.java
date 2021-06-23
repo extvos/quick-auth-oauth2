@@ -1,6 +1,6 @@
 package plus.extvos.auth.service.standard;
 
-import plus.extvos.auth.entity.OAuthState;
+import plus.extvos.auth.dto.OAuthState;
 import plus.extvos.auth.service.OAuthProvider;
 import plus.extvos.restlet.Assert;
 import plus.extvos.restlet.exception.RestletException;

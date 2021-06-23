@@ -1,4 +1,4 @@
-package plus.extvos.auth.entity;
+package plus.extvos.auth.dto;
 
 import java.io.Serializable;
 import java.util.Map;
