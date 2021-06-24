@@ -15,10 +15,10 @@ public class StateServiceImpl implements StateService {
 
     public StateServiceImpl() {
         stateCache = Caffeine.newBuilder()
-                .expireAfterWrite(Duration.ofMinutes(5L))
-                .maximumSize(1000L)
-                .initialCapacity(100)
-                .build();
+            .expireAfterWrite(Duration.ofMinutes(5L))
+            .maximumSize(1000L)
+            .initialCapacity(100)
+            .build();
     }
 
     @Override

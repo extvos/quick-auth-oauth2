@@ -14,9 +14,9 @@ public class ProviderServiceImpl implements ProviderService {
 
     @Override
     public OAuthProvider getProvider(String slug) {
-        if(providers!=null){
-            for(OAuthProvider p: providers){
-                if(slug.equals(p.getSlug())){
+        if (providers != null) {
+            for (OAuthProvider p : providers) {
+                if (slug.equals(p.getSlug())) {
                     return p;
                 }
             }

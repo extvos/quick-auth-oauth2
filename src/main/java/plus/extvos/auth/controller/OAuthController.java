@@ -1,18 +1,5 @@
 package plus.extvos.auth.controller;
 
-import plus.extvos.auth.config.QuickAuthConfig;
-import plus.extvos.auth.dto.OAuthInfo;
-import plus.extvos.auth.dto.UserInfo;
-import plus.extvos.auth.dto.OAuthResult;
-import plus.extvos.auth.dto.OAuthState;
-import plus.extvos.auth.service.*;
-import plus.extvos.auth.shiro.QuickToken;
-import plus.extvos.common.Validator;
-import plus.extvos.common.utils.QrCode;
-import plus.extvos.common.utils.QuickHash;
-import plus.extvos.restlet.Assert;
-import plus.extvos.restlet.Result;
-import plus.extvos.restlet.exception.RestletException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.shiro.SecurityUtils;
@@ -25,6 +12,19 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
+import plus.extvos.auth.config.QuickAuthConfig;
+import plus.extvos.auth.dto.OAuthInfo;
+import plus.extvos.auth.dto.OAuthResult;
+import plus.extvos.auth.dto.OAuthState;
+import plus.extvos.auth.dto.UserInfo;
+import plus.extvos.auth.service.*;
+import plus.extvos.auth.shiro.QuickToken;
+import plus.extvos.common.Validator;
+import plus.extvos.common.utils.QrCode;
+import plus.extvos.common.utils.QuickHash;
+import plus.extvos.restlet.Assert;
+import plus.extvos.restlet.Result;
+import plus.extvos.restlet.exception.RestletException;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
@@ -188,7 +188,7 @@ public class OAuthController {
 
     @ApiOperation(value = "第三方登录跳转QRCODE", notes = "获取图片QRCODE，直接输出图片", position = 3)
     @RequestMapping(produces = MediaType.IMAGE_PNG_VALUE,
-            value = "/{provider}/code-img", method = RequestMethod.GET)
+        value = "/{provider}/code-img", method = RequestMethod.GET)
     protected ModelAndView getCodeUrl(@PathVariable("provider") String provider,
                                       @RequestParam(value = "redirectUri", required = false) String redirectUri,
                                       @RequestParam(required = false) Integer size,
@@ -324,7 +324,7 @@ public class OAuthController {
             log.debug("authorized:> userInfo of {} resolved as {}, try to update...", openId, authInfo.getUserId());
             authInfo = openidResolver.update(provider, openId, authInfo.getUserId(), extraInfo);
         }
-        UserInfo userInfo = quickAuthService.getUserById(authInfo.getUserId(),true);
+        UserInfo userInfo = quickAuthService.getUserById(authInfo.getUserId(), true);
         userInfo.setProvider(provider);
         userInfo.setOpenId(authInfo.getOpenId());
         userInfo.setExtraInfo(authInfo.getExtraInfo());
@@ -426,8 +426,8 @@ public class OAuthController {
             authInfo = openidResolver.resolve(provider, authState.getOpenId(), null, extraInfo);
         }
 
-        if(null == userInfo && null != authInfo){
-            userInfo = quickAuthService.getUserById(authInfo.getUserId(),true);
+        if (null == userInfo && null != authInfo) {
+            userInfo = quickAuthService.getUserById(authInfo.getUserId(), true);
         }
 
         // get userInfo by phone number if userInfo not presented and phone is ready
@@ -452,13 +452,13 @@ public class OAuthController {
             } else {
                 log.debug("registerSession:> auto register user ...");
                 authInfo = openidResolver.register(provider, authState.getOpenId(), username, password, extraInfo);
-                userInfo = quickAuthService.getUserById(authInfo.getUserId(),true);
+                userInfo = quickAuthService.getUserById(authInfo.getUserId(), true);
             }
         } else {
             log.debug("registerSession:> resolved used: {}, update ...", userInfo.getUsername());
             authInfo = openidResolver.update(provider, authState.getOpenId(), userInfo.getUserId(), extraInfo);
         }
-        if (authInfo.getExtraInfo() != null) {
+        if (authInfo != null && authInfo.getExtraInfo() != null) {
             extraInfo.putAll(authInfo.getExtraInfo());
         }
         authState.setUserInfo(userInfo);

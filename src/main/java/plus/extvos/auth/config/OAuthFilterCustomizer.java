@@ -1,7 +1,7 @@
 package plus.extvos.auth.config;
 
-import plus.extvos.auth.service.QuickFilterCustomizer;
 import org.springframework.context.annotation.Configuration;
+import plus.extvos.auth.service.QuickFilterCustomizer;
 
 /**
  * @author Mingcai SHEN
@@ -13,7 +13,7 @@ public class OAuthFilterCustomizer implements QuickFilterCustomizer {
     @Override
     public String[] anons() {
         return new String[]{
-                ctxPath + "/" + "auth/oauth/**"
+            ctxPath + "/" + "auth/oauth/**"
         };
     }
 

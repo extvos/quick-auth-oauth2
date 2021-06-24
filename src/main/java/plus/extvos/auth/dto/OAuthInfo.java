@@ -5,6 +5,7 @@ import java.util.Map;
 
 /**
  * Open Account info when user try to login via OAuth
+ *
  * @author shenmc
  */
 public class OAuthInfo {
@@ -14,7 +15,7 @@ public class OAuthInfo {
     private String openId;
     private Map<String, Object> extraInfo;
 
-    public OAuthInfo(){
+    public OAuthInfo() {
 
     }
 
@@ -80,7 +81,7 @@ public class OAuthInfo {
     }
 
     public UserInfo buildUserInfo(String username, String password, String cellphone) {
-        UserInfo ui = new UserInfo(userId,username,password, cellphone,extraInfo);
+        UserInfo ui = new UserInfo(userId, username, password, cellphone, extraInfo);
         ui.setProvider(provider);
         ui.setOpenId(openId);
         return ui;
