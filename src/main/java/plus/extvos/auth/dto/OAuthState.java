@@ -26,6 +26,8 @@ public class OAuthState implements Serializable {
     public static final int INFO_PRESENTED = 4;
     public static final int LOGGED_IN = 5;
 
+    public static final String OAUTH_STATE_KEY = "QUICK_OAUTH_STATE";
+
     private String sessionId;
 
     private int status;
@@ -40,7 +42,7 @@ public class OAuthState implements Serializable {
 
     private String openId;
 
-    private String token;
+    private String accessToken;
 
     private String refreshToken;
 
@@ -135,12 +137,12 @@ public class OAuthState implements Serializable {
         this.sessionKey = sessionKey;
     }
 
-    public String getToken() {
-        return token;
+    public String getAccessToken() {
+        return accessToken;
     }
 
-    public void setToken(String token) {
-        this.token = token;
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
     }
 
     public String getRefreshToken() {
