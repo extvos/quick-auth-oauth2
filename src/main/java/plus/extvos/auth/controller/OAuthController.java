@@ -1,21 +1,10 @@
 package plus.extvos.auth.controller;
 
-import plus.extvos.auth.config.QuickAuthConfig;
-import plus.extvos.auth.dto.UserInfo;
-import plus.extvos.auth.entity.OAuthResult;
-import plus.extvos.auth.entity.OAuthState;
-import plus.extvos.auth.service.*;
-import plus.extvos.auth.shiro.QuickToken;
-import plus.extvos.common.Validator;
-import plus.extvos.common.utils.QrCode;
-import plus.extvos.common.utils.QuickHash;
-import plus.extvos.restlet.Assert;
-import plus.extvos.restlet.Result;
-import plus.extvos.restlet.exception.RestletException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.session.Session;
+import org.apache.shiro.session.mgt.DefaultSessionKey;
 import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +13,19 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
+import plus.extvos.auth.config.QuickAuthConfig;
+import plus.extvos.auth.dto.OAuthInfo;
+import plus.extvos.auth.dto.OAuthResult;
+import plus.extvos.auth.dto.OAuthState;
+import plus.extvos.auth.dto.UserInfo;
+import plus.extvos.auth.service.*;
+import plus.extvos.auth.shiro.QuickToken;
+import plus.extvos.common.Validator;
+import plus.extvos.common.utils.QrCode;
+import plus.extvos.common.utils.QuickHash;
+import plus.extvos.restlet.Assert;
+import plus.extvos.restlet.Result;
+import plus.extvos.restlet.exception.RestletException;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
@@ -60,9 +62,6 @@ public class OAuthController {
 
     @Autowired
     private ProviderService providerService;
-
-    @Autowired
-    private StateService stateService;
 
     @Value("${quick.auth.base-url:http://localhost}")
     private String baseUrl;
@@ -111,7 +110,8 @@ public class OAuthController {
             stateObj.setUserInfo(quickAuthService.getUserByName(subject.getPrincipal().toString(), false));
         }
         stateObj.setStatus(OAuthState.INITIALIZED);
-        stateService.put(stateObj.getSessionId(), stateObj);
+//        stateService.put(stateObj.getSessionId(), stateObj);
+        session.setAttribute(OAuthState.OAUTH_STATE_KEY,stateObj);
         gotoUrl += "?state=" + stateObj.getSessionId();
         try {
             if (redirectUri != null && !redirectUri.isEmpty()) {
@@ -151,11 +151,14 @@ public class OAuthController {
         OAuthProvider oAuthProvider = getProvider(provider);
         Subject subject = SecurityUtils.getSubject();
         String gotoUri = failureUri;
+        Session session;
         if (state == null || state.isEmpty()) {
-            Session session = subject.getSession(true);
+            session = subject.getSession(true);
             state = session.getId().toString();
+        }else{
+            session = SecurityUtils.getSecurityManager().getSession(new DefaultSessionKey(state));
         }
-        OAuthState stateObj = stateService.get(state);
+        OAuthState stateObj = (OAuthState) session.getAttribute(OAuthState.OAUTH_STATE_KEY); // stateService.get(state);
         if (null == stateObj) {
             stateObj = new OAuthState(state);
             if (subject.isAuthenticated()) {
@@ -166,7 +169,8 @@ public class OAuthController {
             log.debug("goRedirect:> get state via StateService: {}", stateObj.getSessionId());
         }
         stateObj.setStatus(OAuthState.REDIRECTED);
-        stateService.put(stateObj.getSessionId(), stateObj);
+//        stateService.put(stateObj.getSessionId(), stateObj);
+        session.setAttribute(OAuthState.OAUTH_STATE_KEY, stateObj);
         gotoUri = getProviderLoginUri(oAuthProvider, redirectUri, state);
         try {
             log.debug("goRedirect:> Redirecting to: {}", gotoUri);
@@ -187,7 +191,7 @@ public class OAuthController {
 
     @ApiOperation(value = "第三方登录跳转QRCODE", notes = "获取图片QRCODE，直接输出图片", position = 3)
     @RequestMapping(produces = MediaType.IMAGE_PNG_VALUE,
-            value = "/{provider}/code-img", method = RequestMethod.GET)
+        value = "/{provider}/code-img", method = RequestMethod.GET)
     protected ModelAndView getCodeUrl(@PathVariable("provider") String provider,
                                       @RequestParam(value = "redirectUri", required = false) String redirectUri,
                                       @RequestParam(required = false) Integer size,
@@ -234,7 +238,8 @@ public class OAuthController {
             authState.setUserInfo(u);
 
         } else {
-            authState = stateService.get(sess.getId().toString());
+//            authState = stateService.get(sess.getId().toString());
+            authState = (OAuthState) sess.getAttribute(OAuthState.OAUTH_STATE_KEY);
             if (null == authState) {
                 throw RestletException.notFound("state not exists");
             }
@@ -245,7 +250,12 @@ public class OAuthController {
                     try {
                         subject.login(tk);
                         authState.setStatus(OAuthState.LOGGED_IN);
-                        stateService.put(sess.getId().toString(), authState);
+//                        stateService.put(sess.getId().toString(), authState);
+                        sess.setAttribute(OAuthState.OAUTH_STATE_KEY,authState);
+                        userInfo.setProvider(provider);
+                        userInfo.setExtraInfo(authState.getExtraInfo());
+                        userInfo.setOpenId(authState.getOpenId());
+                        sess.setAttribute(UserInfo.USER_INFO_KEY,userInfo);
                     } catch (Exception e) {
                         log.error("getAuthorizedStatus:> try to login failed by {} ", userInfo.getUsername(), e);
                         tk.clear();
@@ -269,15 +279,18 @@ public class OAuthController {
                                           @RequestParam(value = "via", required = false) String via) throws RestletException {
         log.debug("authorized:> code={},state={}", code, state);
         Subject subject = SecurityUtils.getSubject();
+        Session session;
         OAuthProvider oAuthProvider = getProvider(provider);
         if (Validator.isEmpty(code)) {
             throw RestletException.forbidden("authorization not accepted");
         }
         if (Validator.isEmpty(state)) {
-            Session session = subject.getSession(true);
+            session = subject.getSession(true);
             state = session.getId().toString();
+        } else {
+            session = SecurityUtils.getSecurityManager().getSession(new DefaultSessionKey(state));
         }
-        OAuthState authState = stateService.get(state);
+        OAuthState authState = (OAuthState) session.getAttribute(OAuthState.OAUTH_STATE_KEY);// stateService.get(state);
         if (authState == null || Validator.isEmpty(authState.getSessionId())) {
             log.debug("authorized:> state of '{}' not exists, make a new one...", state);
             authState = new OAuthState(state);
@@ -287,45 +300,54 @@ public class OAuthController {
         } catch (RestletException e) {
             authState.setStatus(OAuthState.FAILED);
             authState.setError(e.getMessage());
-            stateService.put(authState.getSessionId(), authState);
+//            stateService.put(authState.getSessionId(), authState);
+            session.setAttribute(OAuthState.OAUTH_STATE_KEY,authState);
             throw e;
         }
         authState.setStatus(OAuthState.ACCEPTED);
-        stateService.put(authState.getSessionId(), authState);
+//        stateService.put(authState.getSessionId(), authState);
+        session.setAttribute(OAuthState.OAUTH_STATE_KEY,authState);
         String currentUsername = null;
         Serializable currentUserId = null;
         if (authState.getUserInfo() != null) {
             currentUsername = authState.getUserInfo().getUsername();
-            currentUserId = authState.getUserInfo().getId();
+            currentUserId = authState.getUserInfo().getUserId();
         }
         Assert.notEmpty(authState.getOpenId(), RestletException.serviceUnavailable("openid not provided"));
         Map<String, Object> extraInfo = authState.getExtraInfo();
         String openId = authState.getOpenId();
         authState.setOpenId(openId);
         authState.setStatus(OAuthState.ID_PRESENTED);
-        stateService.put(authState.getSessionId(), authState);
-        UserInfo userInfo = openidResolver.resolve(provider, openId, currentUserId, extraInfo);
-        if (null == userInfo) {
+//        stateService.put(authState.getSessionId(), authState);
+        session.setAttribute(OAuthState.OAUTH_STATE_KEY,authState);
+        OAuthInfo authInfo = openidResolver.resolve(provider, openId, currentUserId, extraInfo);
+        if (null == authInfo) {
             if (!autoRegister) {
-                log.debug("authorized:> userInfo of {} not resolved, auto register disabled.", openId);
+                log.debug("authorized:> authInfo of {} not resolved, auto register disabled.", openId);
                 return Result.data(authState.asResult()).success();
             }
             if (Validator.notEmpty(extraInfo)) {
-                userInfo = openidResolver.register(provider, openId, currentUsername, null, extraInfo);
-                authState.setExtraInfo(userInfo.getExtraInfo());
+                authInfo = openidResolver.register(provider, openId, currentUsername, null, extraInfo);
+                authState.setExtraInfo(authInfo.getExtraInfo());
             } else {
                 return Result.data(authState.asResult()).success();
             }
-            if (null == userInfo) {
-                throw RestletException.forbidden("auto register openid '" + openId + "' failed.");
-            }
+//            if (null == authInfo) {
+//                throw RestletException.forbidden("auto register openid '" + openId + "' failed.");
+//            }
         } else if (Validator.notEmpty(extraInfo)) {
-            log.debug("authorized:> userInfo of {} resolved as {}, try to update...", openId, userInfo.getId());
-            userInfo = openidResolver.update(provider, openId, userInfo.getId(), extraInfo);
+            log.debug("authorized:> userInfo of {} resolved as {}, try to update...", openId, authInfo.getUserId());
+            authInfo = openidResolver.update(provider, openId, authInfo.getUserId(), extraInfo);
         }
+        UserInfo userInfo = quickAuthService.getUserById(authInfo.getUserId(), true);
+        userInfo.setProvider(provider);
+        userInfo.setOpenId(authInfo.getOpenId());
+        userInfo.setExtraInfo(authInfo.getExtraInfo());
         authState.setUserInfo(userInfo);
+        authState.setAuthInfo(authInfo);
         authState.setStatus(OAuthState.INFO_PRESENTED);
-        stateService.put(authState.getSessionId(), authState);
+//        stateService.put(authState.getSessionId(), authState);
+        session.setAttribute(OAuthState.OAUTH_STATE_KEY,authState);
         if (quickAuthConfig.isPhoneRequired() && Validator.isEmpty(userInfo.getCellphone())) {
             log.debug("authorized:> use cellphone not presented ...");
             return Result.data(authState.asResult()).success();
@@ -337,8 +359,13 @@ public class OAuthController {
             try {
                 subject.login(tk);
                 authState.setStatus(OAuthState.LOGGED_IN);
-                authState.setExtraInfo(userInfo.getExtraInfo());
-                stateService.put(authState.getSessionId(), authState);
+                authState.setExtraInfo(authInfo.getExtraInfo());
+//                stateService.put(authState.getSessionId(), authState);
+                session.setAttribute(OAuthState.OAUTH_STATE_KEY,authState);
+                userInfo.setProvider(provider);
+                userInfo.setExtraInfo(extraInfo);
+                userInfo.setOpenId(authState.getOpenId());
+                session.setAttribute(UserInfo.USER_INFO_KEY,userInfo);
                 return Result.data(authState.asResult()).success();
             } catch (Exception e) {
                 log.error("getAuthorizedStatus:> try to login failed by {} ", userInfo.getUsername(), e);
@@ -377,9 +404,9 @@ public class OAuthController {
         }
         String state = session.getId().toString();
         OAuthProvider oAuthProvider = getProvider(provider);
-        OAuthState authState = stateService.get(state);
+        OAuthState authState = (OAuthState) session.getAttribute(OAuthState.OAUTH_STATE_KEY); //stateService.get(state);
         if (authState == null || Validator.isEmpty(authState.getSessionId())) {
-            throw RestletException.conflict("Session state of '" + state + "' not exists");
+            throw RestletException.unauthorized("Session state of '" + state + "' not exists");
         }
         log.debug("registerSession:> authState: {} / {}", authState, requestParams);
         Assert.greaterThan(authState.getStatus(), OAuthState.ACCEPTED, RestletException.forbidden("session not in state"));
@@ -403,26 +430,31 @@ public class OAuthController {
 //        log.debug("registerSession:> rawMap = {}", rawMap);
 
         UserInfo userInfo = authState.getUserInfo();
+        OAuthInfo authInfo = authState.getAuthInfo();
         Map<String, Object> extraInfo = authState.getExtraInfo();
-        // userInfo == null ? authState.getExtraInfo() : userInfo.getExtraInfo();
 
         if (authState.getStatus() >= OAuthState.LOGGED_IN) {
-            openidResolver.update(provider, authState.getOpenId(), authState.getUserInfo() == null ? null : authState.getUserInfo().getId(), extraInfo);
+            openidResolver.update(provider, authState.getOpenId(), authInfo == null ? null : authInfo.getUserId(), extraInfo);
             return Result.data(authState.asResult()).success();
         }
         // TODO: register user .... ???
         // Present status
         authState.setStatus(OAuthState.INFO_PRESENTED);
-        stateService.put(authState.getSessionId(), authState);
+//        stateService.put(authState.getSessionId(), authState);
+        session.setAttribute(OAuthState.OAUTH_STATE_KEY,authState);
+
+        // get userInfo by openId if userInfo not presented
+        if (null == authInfo) {
+            authInfo = openidResolver.resolve(provider, authState.getOpenId(), null, extraInfo);
+        }
+
+        if (null == userInfo && null != authInfo) {
+            userInfo = quickAuthService.getUserById(authInfo.getUserId(), true);
+        }
 
         // get userInfo by phone number if userInfo not presented and phone is ready
         if (null == userInfo && Validator.notEmpty(extraInfo.getOrDefault(OAuthProvider.PHONE_NUMBER_KEY, "").toString())) {
             userInfo = quickAuthService.getUserByPhone(extraInfo.get(OAuthProvider.PHONE_NUMBER_KEY).toString(), false);
-        }
-
-        // get userInfo by openId if userInfo not presented
-        if (null == userInfo) {
-            userInfo = openidResolver.resolve(provider, authState.getOpenId(), null, extraInfo);
         }
 
         if (quickAuthConfig.isPhoneRequired()) {
@@ -441,16 +473,18 @@ public class OAuthController {
 //                return Result.data(authState.asResult()).success();
             } else {
                 log.debug("registerSession:> auto register user ...");
-                userInfo = openidResolver.register(provider, authState.getOpenId(), username, password, extraInfo);
+                authInfo = openidResolver.register(provider, authState.getOpenId(), username, password, extraInfo);
+                userInfo = quickAuthService.getUserById(authInfo.getUserId(), true);
             }
         } else {
             log.debug("registerSession:> resolved used: {}, update ...", userInfo.getUsername());
-            userInfo = openidResolver.update(provider, authState.getOpenId(), userInfo.getId(), extraInfo);
+            authInfo = openidResolver.update(provider, authState.getOpenId(), userInfo.getUserId(), extraInfo);
         }
-        if (userInfo.getExtraInfo() != null) {
-            extraInfo.putAll(userInfo.getExtraInfo());
+        if (authInfo != null && authInfo.getExtraInfo() != null) {
+            extraInfo.putAll(authInfo.getExtraInfo());
         }
         authState.setUserInfo(userInfo);
+        authState.setAuthInfo(authInfo);
         authState.setExtraInfo(extraInfo);
 
         // trying to login
@@ -459,7 +493,12 @@ public class OAuthController {
         try {
             subject.login(tk);
             authState.setStatus(OAuthState.LOGGED_IN);
-            stateService.put(authState.getSessionId(), authState);
+//            stateService.put(authState.getSessionId(), authState);
+            session.setAttribute(OAuthState.OAUTH_STATE_KEY,authState);
+            userInfo.setProvider(provider);
+            userInfo.setExtraInfo(extraInfo);
+            userInfo.setOpenId(authState.getOpenId());
+            session.setAttribute(UserInfo.USER_INFO_KEY,userInfo);
         } catch (Exception e) {
             log.error("getAuthorizedStatus:> try to login failed by {} ", userInfo.getUsername(), e);
             tk.clear();

@@ -1,6 +1,6 @@
 package plus.extvos.auth.service;
 
-import plus.extvos.auth.entity.OAuthState;
+import plus.extvos.auth.dto.OAuthState;
 import plus.extvos.restlet.exception.RestletException;
 
 import java.util.Map;
@@ -13,6 +13,7 @@ public interface OAuthProvider {
     /**
      * The following constants are for raw map conversion, provider processed extra map info should convert the keys.
      */
+    String PROVIDER_KEY = "provider";
     String NICK_NAME_KEY = "nickname";
     String AVATAR_URL_KEY = "avatarUrl";
     String OPEN_ID_KEY = "openid";

@@ -1,13 +1,13 @@
 package plus.extvos.auth.service.standard;
 
-import plus.extvos.auth.entity.OAuthState;
-import plus.extvos.auth.service.OAuthProvider;
-import plus.extvos.restlet.Assert;
-import plus.extvos.restlet.exception.RestletException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import plus.extvos.auth.dto.OAuthState;
+import plus.extvos.auth.service.OAuthProvider;
+import plus.extvos.restlet.Assert;
+import plus.extvos.restlet.exception.RestletException;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -60,11 +60,11 @@ public class StandardOAuthServiceProvider implements OAuthProvider {
         String s = null;
         try {
             s = config.getEndpoint() +
-                    "?clientId=" + config.getClientId() +
-                    "&response_type=code" +
-                    "&redirect_uri=" + URLEncoder.encode(redirectUri, "UTF-8") +
-                    "&state=" + state +
-                    "&scope=" + config.getScope();
+                "?clientId=" + config.getClientId() +
+                "&response_type=code" +
+                "&redirect_uri=" + URLEncoder.encode(redirectUri, "UTF-8") +
+                "&state=" + state +
+                "&scope=" + config.getScope();
         } catch (UnsupportedEncodingException e) {
             throw RestletException.internalServerError("url encode failed");
         }

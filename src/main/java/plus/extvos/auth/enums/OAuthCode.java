@@ -10,7 +10,7 @@ public enum OAuthCode implements Code {
     /**
      *
      */
-    UNKNOWN_ERROR(50011,"Unknown Error");
+    UNKNOWN_ERROR(50011, "Unknown Error");
 
     private final int value;
     private final String desc;

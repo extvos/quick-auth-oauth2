@@ -1,6 +1,4 @@
-package plus.extvos.auth.entity;
-
-import plus.extvos.auth.dto.UserInfo;
+package plus.extvos.auth.dto;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -28,9 +26,13 @@ public class OAuthState implements Serializable {
     public static final int INFO_PRESENTED = 4;
     public static final int LOGGED_IN = 5;
 
+    public static final String OAUTH_STATE_KEY = "QUICK_OAUTH_STATE";
+
     private String sessionId;
 
     private int status;
+
+    private OAuthInfo authInfo;
 
     private UserInfo userInfo;
 
@@ -39,6 +41,10 @@ public class OAuthState implements Serializable {
     private String failureUri;
 
     private String openId;
+
+    private String accessToken;
+
+    private String refreshToken;
 
     private String sessionKey;
 
@@ -51,7 +57,7 @@ public class OAuthState implements Serializable {
     }
 
     public OAuthResult asResult() {
-        OAuthResult ret = new OAuthResult(userInfo == null ? null : userInfo.getId(), sessionId, userInfo == null ? "" : userInfo.getUsername(), openId, status);
+        OAuthResult ret = new OAuthResult(userInfo == null ? null : userInfo.getUserId(), sessionId, userInfo == null ? "" : userInfo.getUsername(), openId, status);
         if (extraInfo != null) {
             ret.setExtraInfo(extraInfo);
         }
@@ -80,6 +86,15 @@ public class OAuthState implements Serializable {
 
     public void setUserInfo(UserInfo userInfo) {
         this.userInfo = userInfo;
+    }
+
+
+    public OAuthInfo getAuthInfo() {
+        return authInfo;
+    }
+
+    public void setAuthInfo(OAuthInfo authInfo) {
+        this.authInfo = authInfo;
     }
 
     public String getOpenId() {
@@ -120,6 +135,22 @@ public class OAuthState implements Serializable {
 
     public void setSessionKey(String sessionKey) {
         this.sessionKey = sessionKey;
+    }
+
+    public String getAccessToken() {
+        return accessToken;
+    }
+
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 
     public String getError() {

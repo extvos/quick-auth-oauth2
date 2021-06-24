@@ -6,6 +6,7 @@ package plus.extvos.auth.service;
 public interface ProviderService {
     /**
      * Get a provider by slug
+     *
      * @param slug unique name
      * @return provider or null
      */
@@ -13,6 +14,7 @@ public interface ProviderService {
 
     /**
      * get all providers
+     *
      * @return array of providers
      */
     OAuthProvider[] allProviders();
