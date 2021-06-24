@@ -1,23 +1,25 @@
 package plus.extvos.auth.annotation;
 
 import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.Subject;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
+import plus.extvos.auth.dto.UserInfo;
 
 /**
- * {@link AuthorizedToken} 注解的解析
+ * {@link AccessToken} 注解的解析
  *
  * @author Mingcai SHEN
  */
-public class AuthorizedTokenArgumentResolver implements HandlerMethodArgumentResolver {
+public class AccessTokenArgumentResolver implements HandlerMethodArgumentResolver {
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
-        return parameter.hasParameterAnnotation(SessionUser.class);
+        return parameter.hasParameterAnnotation(AccessToken.class);
     }
 
     @Override
@@ -30,10 +32,15 @@ public class AuthorizedTokenArgumentResolver implements HandlerMethodArgumentRes
             return null;
         }
         if (supportsParameter(parameter) && subject.isAuthenticated()) {
+            Session session = subject.getSession();
             if (parameter.getParameterType().equals(String.class)) {
-                return subject.getPrincipal();
+                UserInfo ui = (UserInfo) session.getAttribute(UserInfo.USER_INFO_KEY);
+                if(null != ui){
+                    return ui.getOpenId();
+                }
+                return null;
             }
         }
-        return subject.getPrincipal();
+        return null;
     }
 }
