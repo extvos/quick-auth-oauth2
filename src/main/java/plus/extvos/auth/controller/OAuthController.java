@@ -23,9 +23,9 @@ import plus.extvos.auth.shiro.QuickToken;
 import plus.extvos.common.Validator;
 import plus.extvos.common.utils.QrCode;
 import plus.extvos.common.utils.QuickHash;
-import plus.extvos.restlet.Assert;
-import plus.extvos.restlet.Result;
-import plus.extvos.restlet.exception.RestletException;
+import plus.extvos.common.Assert;
+import plus.extvos.common.Result;
+import plus.extvos.common.exception.ResultException;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
@@ -69,18 +69,18 @@ public class OAuthController {
     @Value("${quick.auth.base.auto-register:false}")
     private boolean autoRegister;
 
-    private OAuthProvider getProvider(String provider) throws RestletException {
+    private OAuthProvider getProvider(String provider) throws ResultException {
         if (provider == null || provider.isEmpty()) {
-            throw RestletException.badRequest("provider slug can not be empty");
+            throw ResultException.badRequest("provider slug can not be empty");
         }
         OAuthProvider oAuthProvider = providerService.getProvider(provider);
         if (null == oAuthProvider) {
-            throw RestletException.notFound("no provider named as '" + provider + "'");
+            throw ResultException.notFound("no provider named as '" + provider + "'");
         }
         return oAuthProvider;
     }
 
-    private String getProviderLoginUri(OAuthProvider oAuthProvider, String redirectUri, String state) throws RestletException {
+    private String getProviderLoginUri(OAuthProvider oAuthProvider, String redirectUri, String state) throws ResultException {
         if (redirectUri == null || redirectUri.isEmpty()) {
             redirectUri = baseUrl;
             String prefix = System.getProperty("server.servlet.context-path");
@@ -95,7 +95,7 @@ public class OAuthController {
         return s;
     }
 
-    private String buildLoginUrl(OAuthProvider oAuthProvider, String redirectUri) throws RestletException {
+    private String buildLoginUrl(OAuthProvider oAuthProvider, String redirectUri) throws ResultException {
         String gotoUrl = baseUrl;
         String prefix = System.getProperty("server.servlet.context-path");
         if (prefix != null && !prefix.isEmpty()) {
@@ -118,7 +118,7 @@ public class OAuthController {
                 gotoUrl += "&redirectUri=" + URLEncoder.encode(redirectUri, "UTF-8");
             }
         } catch (UnsupportedEncodingException e) {
-            throw RestletException.internalServerError(e.getMessage());
+            throw ResultException.internalServerError(e.getMessage());
         }
         log.debug("buildLoginUrl:> {}", gotoUrl);
         return gotoUrl;
@@ -126,7 +126,7 @@ public class OAuthController {
 
     @ApiOperation(value = "第三方登录持列表")
     @GetMapping(value = "/providers")
-    public Result<List<OAuthProvider>> getProviders() throws RestletException {
+    public Result<List<OAuthProvider>> getProviders() throws ResultException {
         List<OAuthProvider> m = new LinkedList<>(Arrays.asList(providerService.allProviders()));
         return Result.data(m).success();
     }
@@ -135,7 +135,7 @@ public class OAuthController {
     @RequestMapping(value = "/{provider}/notify")
     public Object goVerify(@PathVariable("provider") String provider,
                            @RequestParam(required = false) Map<String, Object> params,
-                           @RequestBody(required = false) byte[] body) throws RestletException {
+                           @RequestBody(required = false) byte[] body) throws ResultException {
         log.debug("goVerify:> {} {}", provider, params);
         OAuthProvider oAuthProvider = getProvider(provider);
         return oAuthProvider.notify(params, body);
@@ -147,7 +147,7 @@ public class OAuthController {
                                 @RequestParam(value = "failureUri", required = false) String failureUri,
                                 @RequestParam(value = "redirectUri", required = false) String redirectUri,
                                 @RequestParam(value = "state", required = false) String state,
-                                HttpServletResponse response) throws RestletException {
+                                HttpServletResponse response) throws ResultException {
         OAuthProvider oAuthProvider = getProvider(provider);
         Subject subject = SecurityUtils.getSubject();
         String gotoUri = failureUri;
@@ -184,7 +184,7 @@ public class OAuthController {
     @ApiOperation(value = "第三方登录跳转URL")
     @GetMapping(value = "/{provider}/code-url")
     public Result<String> getCodeUrl(@PathVariable("provider") String provider,
-                                     @RequestParam(value = "redirectUri", required = false) String redirectUri) throws RestletException {
+                                     @RequestParam(value = "redirectUri", required = false) String redirectUri) throws ResultException {
         OAuthProvider oAuthProvider = getProvider(provider);
         return Result.data(buildLoginUrl(oAuthProvider, redirectUri)).success();
     }
@@ -195,7 +195,7 @@ public class OAuthController {
     protected ModelAndView getCodeUrl(@PathVariable("provider") String provider,
                                       @RequestParam(value = "redirectUri", required = false) String redirectUri,
                                       @RequestParam(required = false) Integer size,
-                                      HttpServletResponse response) throws RestletException, IOException {
+                                      HttpServletResponse response) throws ResultException, IOException {
         OAuthProvider oAuthProvider = getProvider(provider);
         String url = buildLoginUrl(oAuthProvider, redirectUri);
 
@@ -227,7 +227,7 @@ public class OAuthController {
 
     @ApiOperation(value = "第三方登录状态")
     @GetMapping(value = "/{provider}/auth-refresh")
-    public Result<OAuthResult> getAuthorizedStatus(@PathVariable("provider") String provider) throws RestletException {
+    public Result<OAuthResult> getAuthorizedStatus(@PathVariable("provider") String provider) throws ResultException {
         OAuthState authState;
         Subject subject = SecurityUtils.getSubject();
         Session sess = subject.getSession();
@@ -241,7 +241,7 @@ public class OAuthController {
 //            authState = stateService.get(sess.getId().toString());
             authState = (OAuthState) sess.getAttribute(OAuthState.OAUTH_STATE_KEY);
             if (null == authState) {
-                throw RestletException.notFound("state not exists");
+                throw ResultException.notFound("state not exists");
             }
             if (authState.getStatus() >= OAuthState.ID_PRESENTED && authState.getStatus() < OAuthState.LOGGED_IN) {
                 UserInfo userInfo = authState.getUserInfo();
@@ -259,7 +259,7 @@ public class OAuthController {
                     } catch (Exception e) {
                         log.error("getAuthorizedStatus:> try to login failed by {} ", userInfo.getUsername(), e);
                         tk.clear();
-                        throw RestletException.conflict("try to login failed");
+                        throw ResultException.conflict("try to login failed");
                     }
                 }
             }
@@ -276,13 +276,13 @@ public class OAuthController {
     public Result<OAuthResult> authorized(@PathVariable("provider") String provider,
                                           @RequestParam(value = "code") String code,
                                           @RequestParam(value = "state", required = false) String state,
-                                          @RequestParam(value = "via", required = false) String via) throws RestletException {
+                                          @RequestParam(value = "via", required = false) String via) throws ResultException {
         log.debug("authorized:> code={},state={}", code, state);
         Subject subject = SecurityUtils.getSubject();
         Session session;
         OAuthProvider oAuthProvider = getProvider(provider);
         if (Validator.isEmpty(code)) {
-            throw RestletException.forbidden("authorization not accepted");
+            throw ResultException.forbidden("authorization not accepted");
         }
         if (Validator.isEmpty(state)) {
             session = subject.getSession(true);
@@ -297,7 +297,7 @@ public class OAuthController {
         }
         try {
             authState = oAuthProvider.authorized(code, state, via, authState);
-        } catch (RestletException e) {
+        } catch (ResultException e) {
             authState.setStatus(OAuthState.FAILED);
             authState.setError(e.getMessage());
 //            stateService.put(authState.getSessionId(), authState);
@@ -313,7 +313,7 @@ public class OAuthController {
             currentUsername = authState.getUserInfo().getUsername();
             currentUserId = authState.getUserInfo().getUserId();
         }
-        Assert.notEmpty(authState.getOpenId(), RestletException.serviceUnavailable("openid not provided"));
+        Assert.notEmpty(authState.getOpenId(), ResultException.serviceUnavailable("openid not provided"));
         Map<String, Object> extraInfo = authState.getExtraInfo();
         String openId = authState.getOpenId();
         authState.setOpenId(openId);
@@ -370,7 +370,7 @@ public class OAuthController {
             } catch (Exception e) {
                 log.error("getAuthorizedStatus:> try to login failed by {} ", userInfo.getUsername(), e);
                 tk.clear();
-                throw RestletException.conflict("try to login failed");
+                throw ResultException.conflict("try to login failed");
             }
         }
         return Result.data(authState.asResult()).success();
@@ -380,7 +380,7 @@ public class OAuthController {
     @PostMapping(value = "/{provider}/session-update")
     public Result<OAuthResult> authorizedUpdate(@PathVariable("provider") String provider,
                                                 @RequestParam(required = false) Map<String, Object> params,
-                                                @RequestBody(required = false) Map<String, Object> objectMap) throws RestletException {
+                                                @RequestBody(required = false) Map<String, Object> objectMap) throws ResultException {
         /*
         @RequestParam(value = "username", required = false) String username,
         @RequestParam(value = "password", required = false) String password,
@@ -396,20 +396,20 @@ public class OAuthController {
             requestParams.putAll(objectMap);
         }
         log.debug("registerSession:> provider={}, params={}", provider, requestParams);
-        Assert.notEmpty(requestParams, RestletException.badRequest("empty request"));
+        Assert.notEmpty(requestParams, ResultException.badRequest("empty request"));
         Subject subject = SecurityUtils.getSubject();
         Session session = subject.getSession();
         if (null == session) {
-            throw RestletException.forbidden("not in a valid session.");
+            throw ResultException.forbidden("not in a valid session.");
         }
         String state = session.getId().toString();
         OAuthProvider oAuthProvider = getProvider(provider);
         OAuthState authState = (OAuthState) session.getAttribute(OAuthState.OAUTH_STATE_KEY); //stateService.get(state);
         if (authState == null || Validator.isEmpty(authState.getSessionId())) {
-            throw RestletException.unauthorized("Session state of '" + state + "' not exists");
+            throw ResultException.unauthorized("Session state of '" + state + "' not exists");
         }
         log.debug("registerSession:> authState: {} / {}", authState, requestParams);
-        Assert.greaterThan(authState.getStatus(), OAuthState.ACCEPTED, RestletException.forbidden("session not in state"));
+        Assert.greaterThan(authState.getStatus(), OAuthState.ACCEPTED, ResultException.forbidden("session not in state"));
 
 //        Assert.notEmpty(authState.getSessionKey(), RestletException.forbidden("session key not presented"));
 //        Assert.notEmpty(authState.getOpenId(), RestletException.forbidden("openid not presented"));
@@ -469,7 +469,7 @@ public class OAuthController {
         if (null == userInfo) {
             if (!autoRegister) {
                 log.debug("registerSession:> not allow to auto register, return status 403");
-                throw RestletException.forbidden("not allowed to login");
+                throw ResultException.forbidden("not allowed to login");
 //                return Result.data(authState.asResult()).success();
             } else {
                 log.debug("registerSession:> auto register user ...");
@@ -502,7 +502,7 @@ public class OAuthController {
         } catch (Exception e) {
             log.error("getAuthorizedStatus:> try to login failed by {} ", userInfo.getUsername(), e);
             tk.clear();
-            throw RestletException.conflict("try to login failed");
+            throw ResultException.conflict("try to login failed");
         }
 
         return Result.data(authState.asResult()).success();

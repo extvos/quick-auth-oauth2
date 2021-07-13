@@ -1,7 +1,7 @@
 package plus.extvos.auth.service;
 
 import plus.extvos.auth.dto.OAuthInfo;
-import plus.extvos.restlet.exception.RestletException;
+import plus.extvos.common.exception.ResultException;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -18,9 +18,9 @@ public interface OpenIdResolver {
      * @param userId   from if user specified
      * @param params   a map result from authenticator
      * @return userInfo or null
-     * @throws RestletException on error
+     * @throws ResultException on error
      */
-    OAuthInfo resolve(String provider, String openId, Serializable userId, Map<String, Object> params) throws RestletException;
+    OAuthInfo resolve(String provider, String openId, Serializable userId, Map<String, Object> params) throws ResultException;
 
     /**
      * register a new user according to openId;
@@ -31,9 +31,9 @@ public interface OpenIdResolver {
      * @param password from if user specified
      * @param params   a map result from authenticator
      * @return userInfo or null
-     * @throws RestletException on error
+     * @throws ResultException on error
      */
-    OAuthInfo register(String provider, String openId, String username, String password, Map<String, Object> params) throws RestletException;
+    OAuthInfo register(String provider, String openId, String username, String password, Map<String, Object> params) throws ResultException;
 
     /**
      * Update user openid information
@@ -43,7 +43,7 @@ public interface OpenIdResolver {
      * @param userId   as user Id
      * @param params   parameters from provider.
      * @return UserInfo of updated.
-     * @throws RestletException when error.
+     * @throws ResultException when error.
      */
-    OAuthInfo update(String provider, String openId, Serializable userId, Map<String, Object> params) throws RestletException;
+    OAuthInfo update(String provider, String openId, Serializable userId, Map<String, Object> params) throws ResultException;
 }

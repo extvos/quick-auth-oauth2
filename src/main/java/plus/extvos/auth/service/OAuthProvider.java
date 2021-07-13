@@ -1,7 +1,7 @@
 package plus.extvos.auth.service;
 
 import plus.extvos.auth.dto.OAuthState;
-import plus.extvos.restlet.exception.RestletException;
+import plus.extvos.common.exception.ResultException;
 
 import java.util.Map;
 
@@ -59,9 +59,9 @@ public interface OAuthProvider {
      * @param params params from request
      * @param body   request body from request
      * @return result
-     * @throws RestletException if errors
+     * @throws ResultException if errors
      */
-    Object notify(Map<String, Object> params, byte[] body) throws RestletException;
+    Object notify(Map<String, Object> params, byte[] body) throws ResultException;
 
     /**
      * get code url for generate QrCode or redirect user browser
@@ -69,9 +69,9 @@ public interface OAuthProvider {
      * @param state       a string to identify state of code url
      * @param redirectUri a string to give the redirectUri
      * @return a string of url.
-     * @throws RestletException if errors
+     * @throws ResultException if errors
      */
-    String getCodeUrl(String state, String redirectUri) throws RestletException;
+    String getCodeUrl(String state, String redirectUri) throws ResultException;
 
 
 //    /**
@@ -113,9 +113,9 @@ public interface OAuthProvider {
      * @param via       parameter
      * @param authState previous state if already exists
      * @return updated authState or new
-     * @throws RestletException when error
+     * @throws ResultException when error
      */
-    OAuthState authorized(String code, String state, String via, OAuthState authState) throws RestletException;
+    OAuthState authorized(String code, String state, String via, OAuthState authState) throws ResultException;
 
     /**
      * authorization updates for special situation
@@ -123,7 +123,7 @@ public interface OAuthProvider {
      * @param params    mapped params
      * @param authState previous state if already exists
      * @return updated authState or new
-     * @throws RestletException RestletException when error
+     * @throws ResultException RestletException when error
      */
-    OAuthState authorizeUpdate(Map<String, Object> params, OAuthState authState) throws RestletException;
+    OAuthState authorizeUpdate(Map<String, Object> params, OAuthState authState) throws ResultException;
 }
