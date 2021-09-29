@@ -86,4 +86,15 @@ public class OAuthInfo {
         ui.setOpenId(openId);
         return ui;
     }
+
+    @Override
+    public String toString() {
+        return "OAuthInfo{" +
+                "id=" + id +
+                ", userId=" + userId +
+                ", provider='" + provider + '\'' +
+                ", openId='" + openId + '\'' +
+                ", extraInfo=" + extraInfo +
+                '}';
+    }
 }

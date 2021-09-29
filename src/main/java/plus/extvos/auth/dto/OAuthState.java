@@ -160,4 +160,22 @@ public class OAuthState implements Serializable {
     public void setError(String error) {
         this.error = error;
     }
+
+    @Override
+    public String toString() {
+        return "OAuthState{" +
+                "sessionId='" + sessionId + '\'' +
+                ", status=" + status +
+                ", authInfo=" + authInfo +
+                ", userInfo=" + userInfo +
+                ", redirectUri='" + redirectUri + '\'' +
+                ", failureUri='" + failureUri + '\'' +
+                ", openId='" + openId + '\'' +
+                ", accessToken='" + accessToken + '\'' +
+                ", refreshToken='" + refreshToken + '\'' +
+                ", sessionKey='" + sessionKey + '\'' +
+                ", extraInfo=" + extraInfo +
+                ", error='" + error + '\'' +
+                '}';
+    }
 }
