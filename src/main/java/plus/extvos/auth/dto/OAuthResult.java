@@ -78,7 +78,7 @@ public class OAuthResult {
     public String toString() {
         return "OAuthResult{" +
                 "session='" + session + '\'' +
-                ", id=" + id +
+                ", id=" + userId +
                 ", username='" + username + '\'' +
                 ", openId='" + openId + '\'' +
                 ", extraInfo=" + extraInfo +
