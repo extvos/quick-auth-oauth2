@@ -60,6 +60,9 @@ public class OAuthController {
     @Autowired
     private OpenIdResolver openidResolver;
 
+    @Autowired(required = false)
+    private QuickAuthCallback quickAuthCallback;
+
     @Autowired
     private ProviderService providerService;
 
@@ -249,13 +252,16 @@ public class OAuthController {
                     QuickToken tk = new QuickToken(userInfo.getUsername(), userInfo.getPassword(), "", "");
                     try {
                         subject.login(tk);
+                        userInfo = quickAuthService.fillUserInfo(userInfo);
+                        if (null != quickAuthCallback) {
+                            userInfo = quickAuthCallback.onLoggedIn(userInfo);
+                        }
                         authState.setStatus(OAuthState.LOGGED_IN);
-//                        stateService.put(sess.getId().toString(), authState);
-                        sess.setAttribute(OAuthState.OAUTH_STATE_KEY,authState);
+                        sess.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
                         userInfo.setProvider(provider);
                         userInfo.setExtraInfo(authState.getExtraInfo());
                         userInfo.setOpenId(authState.getOpenId());
-                        sess.setAttribute(UserInfo.USER_INFO_KEY,userInfo);
+                        sess.setAttribute(UserInfo.USER_INFO_KEY, userInfo);
                     } catch (Exception e) {
                         log.error("getAuthorizedStatus:> try to login failed by {} ", userInfo.getUsername(), e);
                         tk.clear();
@@ -290,7 +296,7 @@ public class OAuthController {
         } else {
             session = SecurityUtils.getSecurityManager().getSession(new DefaultSessionKey(state));
         }
-        OAuthState authState = (OAuthState) session.getAttribute(OAuthState.OAUTH_STATE_KEY);// stateService.get(state);
+        OAuthState authState = (OAuthState) session.getAttribute(OAuthState.OAUTH_STATE_KEY);
         if (authState == null || Validator.isEmpty(authState.getSessionId())) {
             log.debug("authorized:> state of '{}' not exists, make a new one...", state);
             authState = new OAuthState(state);
@@ -358,10 +364,13 @@ public class OAuthController {
             QuickToken tk = new QuickToken(userInfo.getUsername(), userInfo.getPassword(), "", "");
             try {
                 subject.login(tk);
+                userInfo = quickAuthService.fillUserInfo(userInfo);
+                if (null != quickAuthCallback) {
+                    userInfo = quickAuthCallback.onLoggedIn(userInfo);
+                }
                 authState.setStatus(OAuthState.LOGGED_IN);
                 authState.setExtraInfo(authInfo.getExtraInfo());
-//                stateService.put(authState.getSessionId(), authState);
-                session.setAttribute(OAuthState.OAUTH_STATE_KEY,authState);
+                session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
                 userInfo.setProvider(provider);
                 userInfo.setExtraInfo(extraInfo);
                 userInfo.setOpenId(authState.getOpenId());
@@ -493,12 +502,15 @@ public class OAuthController {
         try {
             subject.login(tk);
             authState.setStatus(OAuthState.LOGGED_IN);
-//            stateService.put(authState.getSessionId(), authState);
-            session.setAttribute(OAuthState.OAUTH_STATE_KEY,authState);
+            userInfo = quickAuthService.fillUserInfo(userInfo);
+            if (null != quickAuthCallback) {
+                userInfo = quickAuthCallback.onLoggedIn(userInfo);
+            }
+            session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
             userInfo.setProvider(provider);
             userInfo.setExtraInfo(extraInfo);
             userInfo.setOpenId(authState.getOpenId());
-            session.setAttribute(UserInfo.USER_INFO_KEY,userInfo);
+            session.setAttribute(UserInfo.USER_INFO_KEY, userInfo);
         } catch (Exception e) {
             log.error("getAuthorizedStatus:> try to login failed by {} ", userInfo.getUsername(), e);
             tk.clear();
