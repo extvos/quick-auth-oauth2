@@ -80,8 +80,8 @@ public class OAuthInfo {
         this.extraInfo = extraInfo;
     }
 
-    public UserInfo buildUserInfo(String username, String password, String cellphone) {
-        UserInfo ui = new UserInfo(userId, username, password, cellphone, extraInfo);
+    public UserInfo buildUserInfo(String username, String password, String cellphone, String email) {
+        UserInfo ui = new UserInfo(userId, username, password, cellphone, email, extraInfo);
         ui.setProvider(provider);
         ui.setOpenId(openId);
         return ui;
