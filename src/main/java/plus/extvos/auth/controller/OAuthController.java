@@ -20,12 +20,13 @@ import plus.extvos.auth.dto.OAuthState;
 import plus.extvos.auth.dto.UserInfo;
 import plus.extvos.auth.service.*;
 import plus.extvos.auth.shiro.QuickToken;
-import plus.extvos.common.Validator;
-import plus.extvos.common.utils.QrCode;
-import plus.extvos.common.utils.QuickHash;
 import plus.extvos.common.Assert;
 import plus.extvos.common.Result;
+import plus.extvos.common.Validator;
 import plus.extvos.common.exception.ResultException;
+import plus.extvos.common.utils.QrCode;
+import plus.extvos.common.utils.QuickHash;
+import plus.extvos.common.utils.SpringContextHolder;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
@@ -86,7 +87,7 @@ public class OAuthController {
     private String getProviderLoginUri(OAuthProvider oAuthProvider, String redirectUri, String state) throws ResultException {
         if (redirectUri == null || redirectUri.isEmpty()) {
             redirectUri = baseUrl;
-            String prefix = System.getProperty("server.servlet.context-path");
+            String prefix = SpringContextHolder.getProperties("server.servlet.context-path");
             log.debug("getProviderLoginUri:> prefix = {}", prefix);
             if (prefix != null && !prefix.isEmpty()) {
                 redirectUri += prefix + "/auth/oauth2/" + oAuthProvider.getSlug() + "/authorized";
@@ -101,7 +102,7 @@ public class OAuthController {
 
     private String buildLoginUrl(OAuthProvider oAuthProvider, String redirectUri) throws ResultException {
         String gotoUrl = baseUrl;
-        String prefix = System.getProperty("server.servlet.context-path");
+        String prefix = SpringContextHolder.getProperties("server.servlet.context-path");
         log.debug("buildLoginUrl:> prefix = {}", prefix);
         if (prefix != null && !prefix.isEmpty()) {
             gotoUrl += prefix + "/auth/oauth2/" + oAuthProvider.getSlug() + "/login-redirect";
