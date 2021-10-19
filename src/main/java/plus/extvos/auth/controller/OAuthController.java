@@ -87,6 +87,7 @@ public class OAuthController {
         if (redirectUri == null || redirectUri.isEmpty()) {
             redirectUri = baseUrl;
             String prefix = System.getProperty("server.servlet.context-path");
+            log.debug("getProviderLoginUri:> prefix = {}", prefix);
             if (prefix != null && !prefix.isEmpty()) {
                 redirectUri += prefix + "/auth/oauth2/" + oAuthProvider.getSlug() + "/authorized";
             } else {
@@ -101,6 +102,7 @@ public class OAuthController {
     private String buildLoginUrl(OAuthProvider oAuthProvider, String redirectUri) throws ResultException {
         String gotoUrl = baseUrl;
         String prefix = System.getProperty("server.servlet.context-path");
+        log.debug("buildLoginUrl:> prefix = {}", prefix);
         if (prefix != null && !prefix.isEmpty()) {
             gotoUrl += prefix + "/auth/oauth2/" + oAuthProvider.getSlug() + "/login-redirect";
         } else {
@@ -114,7 +116,7 @@ public class OAuthController {
         }
         stateObj.setStatus(OAuthState.INITIALIZED);
 //        stateService.put(stateObj.getSessionId(), stateObj);
-        session.setAttribute(OAuthState.OAUTH_STATE_KEY,stateObj);
+        session.setAttribute(OAuthState.OAUTH_STATE_KEY, stateObj);
         gotoUrl += "?state=" + stateObj.getSessionId();
         try {
             if (redirectUri != null && !redirectUri.isEmpty()) {
@@ -158,10 +160,11 @@ public class OAuthController {
         if (state == null || state.isEmpty()) {
             session = subject.getSession(true);
             state = session.getId().toString();
-        }else{
+        } else {
             session = SecurityUtils.getSecurityManager().getSession(new DefaultSessionKey(state));
         }
-        OAuthState stateObj = (OAuthState) session.getAttribute(OAuthState.OAUTH_STATE_KEY); // stateService.get(state);
+        // stateService.get(state);
+        OAuthState stateObj = (OAuthState) session.getAttribute(OAuthState.OAUTH_STATE_KEY);
         if (null == stateObj) {
             stateObj = new OAuthState(state);
             if (subject.isAuthenticated()) {
@@ -194,14 +197,14 @@ public class OAuthController {
 
     @ApiOperation(value = "第三方登录跳转QRCODE", notes = "获取图片QRCODE，直接输出图片", position = 3)
     @RequestMapping(produces = MediaType.IMAGE_PNG_VALUE,
-        value = "/{provider}/code-img", method = RequestMethod.GET)
+            value = "/{provider}/code-img", method = RequestMethod.GET)
     protected ModelAndView getCodeUrl(@PathVariable("provider") String provider,
                                       @RequestParam(value = "redirectUri", required = false) String redirectUri,
                                       @RequestParam(required = false) Integer size,
                                       HttpServletResponse response) throws ResultException, IOException {
         OAuthProvider oAuthProvider = getProvider(provider);
         String url = buildLoginUrl(oAuthProvider, redirectUri);
-
+        log.debug("getCodeUrl: {}", url);
         if (size == null || size < 64) {
             size = 256;
         }
@@ -307,12 +310,12 @@ public class OAuthController {
             authState.setStatus(OAuthState.FAILED);
             authState.setError(e.getMessage());
 //            stateService.put(authState.getSessionId(), authState);
-            session.setAttribute(OAuthState.OAUTH_STATE_KEY,authState);
+            session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
             throw e;
         }
         authState.setStatus(OAuthState.ACCEPTED);
 //        stateService.put(authState.getSessionId(), authState);
-        session.setAttribute(OAuthState.OAUTH_STATE_KEY,authState);
+        session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
         String currentUsername = null;
         Serializable currentUserId = null;
         if (authState.getUserInfo() != null) {
@@ -325,7 +328,7 @@ public class OAuthController {
         authState.setOpenId(openId);
         authState.setStatus(OAuthState.ID_PRESENTED);
 //        stateService.put(authState.getSessionId(), authState);
-        session.setAttribute(OAuthState.OAUTH_STATE_KEY,authState);
+        session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
         OAuthInfo authInfo = openidResolver.resolve(provider, openId, currentUserId, extraInfo);
         if (null == authInfo) {
             if (!autoRegister) {
@@ -353,7 +356,7 @@ public class OAuthController {
         authState.setAuthInfo(authInfo);
         authState.setStatus(OAuthState.INFO_PRESENTED);
 //        stateService.put(authState.getSessionId(), authState);
-        session.setAttribute(OAuthState.OAUTH_STATE_KEY,authState);
+        session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
         if (quickAuthConfig.isPhoneRequired() && Validator.isEmpty(userInfo.getCellphone())) {
             log.debug("authorized:> use cellphone not presented ...");
             return Result.data(authState.asResult()).success();
@@ -374,7 +377,7 @@ public class OAuthController {
                 userInfo.setProvider(provider);
                 userInfo.setExtraInfo(extraInfo);
                 userInfo.setOpenId(authState.getOpenId());
-                session.setAttribute(UserInfo.USER_INFO_KEY,userInfo);
+                session.setAttribute(UserInfo.USER_INFO_KEY, userInfo);
                 return Result.data(authState.asResult()).success();
             } catch (Exception e) {
                 log.error("getAuthorizedStatus:> try to login failed by {} ", userInfo.getUsername(), e);
@@ -450,7 +453,7 @@ public class OAuthController {
         // Present status
         authState.setStatus(OAuthState.INFO_PRESENTED);
 //        stateService.put(authState.getSessionId(), authState);
-        session.setAttribute(OAuthState.OAUTH_STATE_KEY,authState);
+        session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
 
         // get userInfo by openId if userInfo not presented
         if (null == authInfo) {
