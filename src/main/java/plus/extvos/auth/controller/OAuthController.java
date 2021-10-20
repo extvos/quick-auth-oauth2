@@ -325,7 +325,7 @@ public class OAuthController {
         OAuthInfo authInfo = openidResolver.resolve(provider, openId, currentUserId, extraInfo);
         if (null == authInfo) {
             log.debug("authorized:> not get user by openId({}) and userId({})", openId, currentUserId);
-            if (!autoRegister) {
+            if (!autoRegister && currentUserId == null) {
                 log.debug("authorized:> authInfo of {} not resolved, auto register disabled.", openId);
                 return Result.data(authState.asResult()).success();
             } else { // if (Validator.notEmpty(extraInfo))
