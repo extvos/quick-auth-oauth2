@@ -56,22 +56,22 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
     }
 
     private static final String[] keyMap = new String[]{
-        OAuthProvider.NICK_NAME_KEY + ":" + "nickname",
-        OAuthProvider.NICK_NAME_KEY + ":" + "nickName",
-        OAuthProvider.AVATAR_URL_KEY + ":" + "headimgurl",
-        OAuthProvider.AVATAR_URL_KEY + ":" + "avatarUrl",
-        OAuthProvider.OPEN_ID_KEY + ":" + "openid",
-        OAuthProvider.UNION_ID_KEY + ":" + "unionid",
-        OAuthProvider.SESSION_KEY + ":" + "session_key",
-        OAuthProvider.LANGUAGE_KEY + ":" + "language",
-        OAuthProvider.COUNTRY_KEY + ":" + "country",
-        OAuthProvider.PROVINCE_KEY + ":" + "province",
-        OAuthProvider.CITY_KEY + ":" + "city",
-        OAuthProvider.GENDER_KEY + ":" + "gender",
-        OAuthProvider.PHONE_NUMBER_KEY + ":" + "cellphone",
-        OAuthProvider.PHONE_NUMBER_KEY + ":" + "phoneNumber",
-        OAuthProvider.PHONE_NUMBER_KEY + ":" + "purePhoneNumber",
-        OAuthProvider.COUNTRY_CODE_KEY + ":" + "countryCode",
+            OAuthProvider.NICK_NAME_KEY + ":" + "nickname",
+            OAuthProvider.NICK_NAME_KEY + ":" + "nickName",
+            OAuthProvider.AVATAR_URL_KEY + ":" + "headimgurl",
+            OAuthProvider.AVATAR_URL_KEY + ":" + "avatarUrl",
+            OAuthProvider.OPEN_ID_KEY + ":" + "openid",
+            OAuthProvider.UNION_ID_KEY + ":" + "unionid",
+            OAuthProvider.SESSION_KEY + ":" + "session_key",
+            OAuthProvider.LANGUAGE_KEY + ":" + "language",
+            OAuthProvider.COUNTRY_KEY + ":" + "country",
+            OAuthProvider.PROVINCE_KEY + ":" + "province",
+            OAuthProvider.CITY_KEY + ":" + "city",
+            OAuthProvider.GENDER_KEY + ":" + "gender",
+            OAuthProvider.PHONE_NUMBER_KEY + ":" + "cellphone",
+            OAuthProvider.PHONE_NUMBER_KEY + ":" + "phoneNumber",
+            OAuthProvider.PHONE_NUMBER_KEY + ":" + "purePhoneNumber",
+            OAuthProvider.COUNTRY_CODE_KEY + ":" + "countryCode",
     };
 
     static class SessionResult {
@@ -154,11 +154,11 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
         String s = null;
         try {
             s = config.getEndpoint() +
-                "?appid=" + config.getAppId() +
-                "&response_type=" + config.getResponseType() +
-                "&redirect_uri=" + URLEncoder.encode(redirectUri, "UTF-8") +
-                "&state=" + state +
-                "&scope=" + config.getScope() + "#wechat_redirect";
+                    "?appid=" + config.getAppId() +
+                    "&response_type=" + config.getResponseType() +
+                    "&redirect_uri=" + URLEncoder.encode(redirectUri, "UTF-8") +
+                    "&state=" + state +
+                    "&scope=" + config.getScope() + "#wechat_redirect";
         } catch (UnsupportedEncodingException e) {
             throw ResultException.internalServerError("url encode failed");
         }
@@ -181,7 +181,7 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
      */
     public TokenResult getAccessToken(String code) throws ResultException {
         String accessTokenUrl = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=" + config.getAppId() + "&secret="
-            + config.getAppSecret() + "&code=" + code + "&grant_type=" + config.getGrantType();
+                + config.getAppSecret() + "&code=" + code + "&grant_type=" + config.getGrantType();
         HttpResponse resp = HttpRequest.get(accessTokenUrl).execute();
         if (resp.getStatus() != HttpStatus.HTTP_OK) {
             throw ResultException.serviceUnavailable("request to wechat failed");
@@ -205,7 +205,7 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
         String unionid = map.getOrDefault("unionid", "").toString();
         int expires_in = (int) map.getOrDefault("expires_in", 0);
         TokenResult result = new TokenResult(
-            openid, unionid, accessToken, refreshToken, expires_in);
+                openid, unionid, accessToken, refreshToken, expires_in);
         Map<String, Object> userInfo = getUserInfo(accessToken, openid);
         result.extraInfo = userInfo;
         if (null != userInfo && !userInfo.isEmpty()) {
@@ -397,6 +397,7 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
         } else {
             TokenResult result = getAccessToken(code);
             authState.setOpenId(result.openId);
+            authState.setExtraInfo(result.extraInfo);
         }
         authState.setStatus(OAuthState.ID_PRESENTED);
         return authState;
