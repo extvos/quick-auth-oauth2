@@ -73,6 +73,14 @@ public interface OAuthProvider {
      */
     String getCodeUrl(String state, String redirectUri) throws ResultException;
 
+    /**
+     * Generate a default result page when redirectUri not specified.
+     * @param ret authState
+     * @param message error message
+     * @return out put as String
+     */
+    String resultPage(int ret, String message);
+
 
 //    /**
 //     * Get access token info via code

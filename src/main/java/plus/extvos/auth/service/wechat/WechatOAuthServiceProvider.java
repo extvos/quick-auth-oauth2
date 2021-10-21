@@ -165,6 +165,41 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
         return s;
     }
 
+    @Override
+    public String resultPage(int ret, String message) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("<html>");
+        sb.append("<head>");
+        if (ret > OAuthState.INITIALIZED) {
+            sb.append("<title> 完 成 </title>");
+            sb.append("<script>");
+            sb.append("  function onBridgeReady() {\n" +
+                    "        console.log('WeixinJSBridge',WeixinJSBridge);\n" +
+                    "        WeixinJSBridge.call(\"closeWindow\");\n" +
+                    "    }\n" +
+                    "        if (typeof WeixinJSBridge === \"undefined\") {\n" +
+                    "            if (document.addEventListener) {\n" +
+                    "                document.addEventListener('WeixinJSBridgeReady', onBridgeReady, false);\n" +
+                    "            } else if (document.attachEvent) {\n" +
+                    "                document.attachEvent('WeixinJSBridgeReady', onBridgeReady);\n" +
+                    "                document.attachEvent('onWeixinJSBridgeReady', onBridgeReady);\n" +
+                    "            }\n" +
+                    "        } else {\n" +
+                    "            onBridgeReady();\n" +
+                    "    }");
+            sb.append("</script>");
+            sb.append("</head>");
+        } else {
+            sb.append("<title> 错 误 </title>");
+            sb.append("</head>");
+            sb.append("<body>");
+            sb.append("<p>" + message + "</p>");
+            sb.append("</body>");
+        }
+        sb.append("</html>");
+        return sb.toString();
+    }
+
     /**
      * {
      * "access_token":"ACCESS_TOKEN",

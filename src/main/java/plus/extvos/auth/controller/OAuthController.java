@@ -31,6 +31,7 @@ import plus.extvos.common.utils.SpringContextHolder;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -69,6 +70,9 @@ public class OAuthController {
 
     @Value("${quick.auth.base-url:http://localhost}")
     private String baseUrl;
+
+    @Value("${quick.auth.authorized-url:}")
+    private String authorizedUrl;
 
     @Value("${quick.auth.base.auto-register:false}")
     private boolean autoRegister;
@@ -275,16 +279,80 @@ public class OAuthController {
         return Result.data(authState.asResult()).success();
     }
 
+    private Result<OAuthResult> buildAuthorizedResponse(OAuthProvider provider, HttpServletResponse response, int ret, String err) {
+        log.debug("buildAuthorizedResponse:> {} / {}", ret, err);
+        response.setDateHeader("Expires", 0);
+        response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+        response.addHeader("Cache-Control", "post-check=0, pre-check=0");
+        response.setHeader("Pragma", "no-cache");
+        response.setContentType("text/html; charset=UTF-8");
+        try {
+            if (Validator.notEmpty(authorizedUrl)) {
+                String gotoUri = authorizedUrl + "?ret=" + ret + "&err=" + err;
+                log.debug("buildAuthorizedResponse:> Redirect to {} ", gotoUri);
+                response.sendRedirect(gotoUri);
+            } else {
+                log.debug("buildAuthorizedResponse:> Generating output ...");
+                PrintWriter writer = response.getWriter();
+                writer.write(provider.resultPage(ret,err));
+//                writer.println("<html>");
+//                writer.println("<head>");
+//                if (ret > OAuthState.INITIALIZED) {
+//                    writer.println("<title> 完 成 </title>");
+//                    writer.println("<script>");
+////                    writer.println("  window.open('','_self','');");
+//                    writer.println("  function onBridgeReady() {\n" +
+//                            "        console.log('WeixinJSBridge',WeixinJSBridge);\n" +
+//                            "        WeixinJSBridge.call(\"closeWindow\");\n" +
+//                            "    }\n" +
+//                            "        if (typeof WeixinJSBridge === \"undefined\") {\n" +
+//                            "            if (document.addEventListener) {\n" +
+//                            "                document.addEventListener('WeixinJSBridgeReady', onBridgeReady, false);\n" +
+//                            "            } else if (document.attachEvent) {\n" +
+//                            "                document.attachEvent('WeixinJSBridgeReady', onBridgeReady);\n" +
+//                            "                document.attachEvent('onWeixinJSBridgeReady', onBridgeReady);\n" +
+//                            "            }\n" +
+//                            "        } else {\n" +
+//                            "            onBridgeReady();\n" +
+//                            "    }");
+//                    writer.println("</script>");
+//                    writer.println("</head>");
+//                } else {
+//                    writer.println("<title> 错 误 </title>");
+//                    writer.println("</head>");
+//                    writer.println("<body>");
+//                    writer.println("<p>" + err + "</p>");
+//                    writer.println("</body>");
+//                }
+//                writer.println("</html>");
+                writer.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
+    /**
+     * @param provider
+     * @param code
+     * @param state
+     * @param via
+     * @param response
+     * @return
+     * @throws ResultException
+     */
     @ApiOperation(value = "第三方登录回调", notes = "via should be 'SESSIONKEY' when calling via Session Key mode")
     @GetMapping(value = "/{provider}/authorized")
     public Result<OAuthResult> authorized(@PathVariable("provider") String provider,
                                           @RequestParam(value = "code") String code,
                                           @RequestParam(value = "state", required = false) String state,
-                                          @RequestParam(value = "via", required = false) String via) throws ResultException {
+                                          @RequestParam(value = "via", required = false) String via,
+                                          HttpServletResponse response) throws ResultException {
         log.debug("authorized:> code={},state={}", code, state);
         Subject subject = SecurityUtils.getSubject();
         Session session;
+        boolean external = false;
         OAuthProvider oAuthProvider = getProvider(provider);
         if (Validator.isEmpty(code)) {
             throw ResultException.forbidden("authorization not accepted");
@@ -293,6 +361,7 @@ public class OAuthController {
             session = subject.getSession(true);
             state = session.getId().toString();
         } else {
+            external = true;
             session = SecurityUtils.getSecurityManager().getSession(new DefaultSessionKey(state));
         }
         OAuthState authState = (OAuthState) session.getAttribute(OAuthState.OAUTH_STATE_KEY);
@@ -306,7 +375,11 @@ public class OAuthController {
             authState.setStatus(OAuthState.FAILED);
             authState.setError(e.getMessage());
             session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
-            throw e;
+            if (external) {
+                return buildAuthorizedResponse(oAuthProvider, response, authState.getStatus(), e.getMessage());
+            } else {
+                throw e;
+            }
         }
         authState.setStatus(OAuthState.ACCEPTED);
         session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
@@ -337,7 +410,11 @@ public class OAuthController {
                 return Result.data(authState.asResult()).success();
             } */
             if (null == authInfo) {
-                throw ResultException.forbidden("auto register openid '" + openId + "' failed.");
+                if (external) {
+                    return buildAuthorizedResponse(oAuthProvider, response, OAuthState.FAILED, "auto register openid '" + openId + "' failed.");
+                } else {
+                    throw ResultException.forbidden("auto register openid '" + openId + "' failed.");
+                }
             }
         } else if (Validator.notEmpty(extraInfo)) {
             log.debug("authorized:> userInfo of {} resolved as {}, try to update...", openId, authInfo.getUserId());
@@ -353,7 +430,11 @@ public class OAuthController {
         session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
         if (quickAuthConfig.isPhoneRequired() && Validator.isEmpty(userInfo.getCellphone())) {
             log.debug("authorized:> use cellphone not presented ...");
-            return Result.data(authState.asResult()).success();
+            if (external) {
+                return buildAuthorizedResponse(oAuthProvider, response, authState.getStatus(), "");
+            } else {
+                return Result.data(authState.asResult()).success();
+            }
         }
         // Do the login if state in current session.
         if (authState.getSessionId().equals(subject.getSession().getId().toString())) {
@@ -376,10 +457,18 @@ public class OAuthController {
             } catch (Exception e) {
                 log.error("getAuthorizedStatus:> try to login failed by {} ", userInfo.getUsername(), e);
                 tk.clear();
-                throw ResultException.conflict("try to login failed");
+                if (external) {
+                    return buildAuthorizedResponse(oAuthProvider, response, OAuthState.FAILED, "try to login failed");
+                } else {
+                    throw ResultException.conflict("try to login failed");
+                }
             }
         }
-        return Result.data(authState.asResult()).success();
+        if (external) {
+            return buildAuthorizedResponse(oAuthProvider, response, authState.getStatus(), "");
+        } else {
+            return Result.data(authState.asResult()).success();
+        }
     }
 
     @ApiOperation(value = "第三方会话更新", notes = "在第三方认证调用authorized接口没有完成登录时，通过更新数据完成注册登录流程，目前用于小程序认证登录")

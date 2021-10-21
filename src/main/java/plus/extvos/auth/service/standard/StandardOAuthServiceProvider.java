@@ -72,6 +72,11 @@ public class StandardOAuthServiceProvider implements OAuthProvider {
     }
 
     @Override
+    public String resultPage(int ret, String message) {
+        return "";
+    }
+
+    @Override
     public OAuthState authorized(String code, String state, String via, OAuthState authState) throws ResultException {
         return null;
     }
