@@ -184,7 +184,8 @@ public class OAuthController {
             log.debug("goRedirect:> Redirecting to: {}", gotoUri);
             response.sendRedirect(gotoUri);
         } catch (IOException e) {
-            e.printStackTrace();
+
+            log.error(">>", e);
         }
         return null;
     }
@@ -227,7 +228,8 @@ public class OAuthController {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+
+            log.error(">>", e);
         }
         return null;
     }
@@ -328,7 +330,8 @@ public class OAuthController {
                 writer.close();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+
+            log.error(">>", e);
         }
         return null;
     }

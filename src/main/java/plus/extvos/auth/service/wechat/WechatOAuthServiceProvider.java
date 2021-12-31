@@ -385,7 +385,8 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+
+            log.error(">>", e);
             throw ResultException.badRequest(e.getMessage());
         }
         throw ResultException.badRequest("unknown error on decrypt data");
