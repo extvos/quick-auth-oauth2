@@ -6,8 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import plus.extvos.auth.dto.OAuthState;
 import plus.extvos.auth.service.OAuthProvider;
-import plus.extvos.restlet.Assert;
-import plus.extvos.restlet.exception.RestletException;
+import plus.extvos.common.Assert;
+import plus.extvos.common.exception.ResultException;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -45,18 +45,18 @@ public class StandardOAuthServiceProvider implements OAuthProvider {
     }
 
     @Override
-    public Object notify(Map<String, Object> params, byte[] body) throws RestletException {
+    public Object notify(Map<String, Object> params, byte[] body) throws ResultException {
         log.debug("notify:> {} / {}", params, body != null ? body.length : 0);
-        Assert.notEmpty(params, RestletException.badRequest("invalid request"));
+        Assert.notEmpty(params, ResultException.badRequest("invalid request"));
         return null;
     }
 
     @Override
-    public String getCodeUrl(String state, String redirectUri) throws RestletException {
-        Assert.notEmpty(config.getClientId(), RestletException.internalServerError("oauth2 client can not be empty"));
-        Assert.notEmpty(config.getSecret(), RestletException.internalServerError("oauth2 secret can not be empty"));
-        Assert.notEmpty(config.getEndpoint(), RestletException.internalServerError("oauth2 endpoint can not be empty"));
-        Assert.notEmpty(config.getScope(), RestletException.internalServerError("oauth2 scope can not be empty"));
+    public String getCodeUrl(String state, String redirectUri) throws ResultException {
+        Assert.notEmpty(config.getClientId(), ResultException.internalServerError("oauth2 client can not be empty"));
+        Assert.notEmpty(config.getSecret(), ResultException.internalServerError("oauth2 secret can not be empty"));
+        Assert.notEmpty(config.getEndpoint(), ResultException.internalServerError("oauth2 endpoint can not be empty"));
+        Assert.notEmpty(config.getScope(), ResultException.internalServerError("oauth2 scope can not be empty"));
         String s = null;
         try {
             s = config.getEndpoint() +
@@ -66,18 +66,23 @@ public class StandardOAuthServiceProvider implements OAuthProvider {
                 "&state=" + state +
                 "&scope=" + config.getScope();
         } catch (UnsupportedEncodingException e) {
-            throw RestletException.internalServerError("url encode failed");
+            throw ResultException.internalServerError("url encode failed");
         }
         return s;
     }
 
     @Override
-    public OAuthState authorized(String code, String state, String via, OAuthState authState) throws RestletException {
+    public String resultPage(int ret, String message) {
+        return "";
+    }
+
+    @Override
+    public OAuthState authorized(String code, String state, String via, OAuthState authState) throws ResultException {
         return null;
     }
 
     @Override
-    public OAuthState authorizeUpdate(Map<String, Object> params, OAuthState authState) throws RestletException {
+    public OAuthState authorizeUpdate(Map<String, Object> params, OAuthState authState) throws ResultException {
         return null;
     }
 

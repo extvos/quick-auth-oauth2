@@ -1,0 +1,18 @@
+{
+  "groups": [
+    {
+      "name": "quick.auth.oauth2",
+      "type": "plus.extvos.auth.service.standard.OAuthConfig",
+      "sourceType": "plus.extvos.auth.service.standard.OAuthConfig",
+      "description": "微信认证配置."
+    },
+    {
+      "name": "quick.auth.wechat",
+      "type": "plus.extvos.auth.service.wechat.WechatConfig",
+      "sourceType": "plus.extvos.auth.service.wechat.WechatConfig",
+      "description": "微信认证配置."
+    }
+  ],
+  "properties": [
+  ]
+}

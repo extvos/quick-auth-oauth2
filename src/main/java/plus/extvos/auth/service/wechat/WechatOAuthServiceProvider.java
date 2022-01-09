@@ -14,8 +14,8 @@ import org.springframework.stereotype.Service;
 import plus.extvos.auth.dto.OAuthState;
 import plus.extvos.auth.service.OAuthProvider;
 import plus.extvos.common.utils.QuickHash;
-import plus.extvos.restlet.Assert;
-import plus.extvos.restlet.exception.RestletException;
+import plus.extvos.common.Assert;
+import plus.extvos.common.exception.ResultException;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
@@ -56,22 +56,22 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
     }
 
     private static final String[] keyMap = new String[]{
-        OAuthProvider.NICK_NAME_KEY + ":" + "nickname",
-        OAuthProvider.NICK_NAME_KEY + ":" + "nickName",
-        OAuthProvider.AVATAR_URL_KEY + ":" + "headimgurl",
-        OAuthProvider.AVATAR_URL_KEY + ":" + "avatarUrl",
-        OAuthProvider.OPEN_ID_KEY + ":" + "openid",
-        OAuthProvider.UNION_ID_KEY + ":" + "unionid",
-        OAuthProvider.SESSION_KEY + ":" + "session_key",
-        OAuthProvider.LANGUAGE_KEY + ":" + "language",
-        OAuthProvider.COUNTRY_KEY + ":" + "country",
-        OAuthProvider.PROVINCE_KEY + ":" + "province",
-        OAuthProvider.CITY_KEY + ":" + "city",
-        OAuthProvider.GENDER_KEY + ":" + "gender",
-        OAuthProvider.PHONE_NUMBER_KEY + ":" + "cellphone",
-        OAuthProvider.PHONE_NUMBER_KEY + ":" + "phoneNumber",
-        OAuthProvider.PHONE_NUMBER_KEY + ":" + "purePhoneNumber",
-        OAuthProvider.COUNTRY_CODE_KEY + ":" + "countryCode",
+            OAuthProvider.NICK_NAME_KEY + ":" + "nickname",
+            OAuthProvider.NICK_NAME_KEY + ":" + "nickName",
+            OAuthProvider.AVATAR_URL_KEY + ":" + "headimgurl",
+            OAuthProvider.AVATAR_URL_KEY + ":" + "avatarUrl",
+            OAuthProvider.OPEN_ID_KEY + ":" + "openid",
+            OAuthProvider.UNION_ID_KEY + ":" + "unionid",
+            OAuthProvider.SESSION_KEY + ":" + "session_key",
+            OAuthProvider.LANGUAGE_KEY + ":" + "language",
+            OAuthProvider.COUNTRY_KEY + ":" + "country",
+            OAuthProvider.PROVINCE_KEY + ":" + "province",
+            OAuthProvider.CITY_KEY + ":" + "city",
+            OAuthProvider.GENDER_KEY + ":" + "gender",
+            OAuthProvider.PHONE_NUMBER_KEY + ":" + "cellphone",
+            OAuthProvider.PHONE_NUMBER_KEY + ":" + "phoneNumber",
+            OAuthProvider.PHONE_NUMBER_KEY + ":" + "purePhoneNumber",
+            OAuthProvider.COUNTRY_CODE_KEY + ":" + "countryCode",
     };
 
     static class SessionResult {
@@ -110,17 +110,17 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
 
 
     @Override
-    public Object notify(Map<String, Object> params, byte[] body) throws RestletException {
+    public Object notify(Map<String, Object> params, byte[] body) throws ResultException {
         log.debug("notify:> {} / {}", params, body != null ? body.length : 0);
-        Assert.notEmpty(params, RestletException.badRequest("invalid request"));
+        Assert.notEmpty(params, ResultException.badRequest("invalid request"));
         String signature = params.getOrDefault("signature", "").toString();
-        Assert.notEmpty(signature, RestletException.badRequest("signature can not be empty"));
+        Assert.notEmpty(signature, ResultException.badRequest("signature can not be empty"));
         String timestamp = params.getOrDefault("timestamp", "").toString();
-        Assert.notEmpty(timestamp, RestletException.badRequest("timestamp can not be empty"));
+        Assert.notEmpty(timestamp, ResultException.badRequest("timestamp can not be empty"));
         String nonce = params.getOrDefault("nonce", "").toString();
-        Assert.notEmpty(nonce, RestletException.badRequest("nonce can not be empty"));
+        Assert.notEmpty(nonce, ResultException.badRequest("nonce can not be empty"));
         String echostr = params.getOrDefault("echostr", "").toString();
-        Assert.notEmpty(nonce, RestletException.badRequest("echostr can not be empty"));
+        Assert.notEmpty(nonce, ResultException.badRequest("echostr can not be empty"));
         String openid = params.getOrDefault("openid", "").toString();
         String encryptType = params.getOrDefault("encrypt_type", "").toString();
         String msgSignature = params.getOrDefault("msg_signature", "").toString();
@@ -139,30 +139,65 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
         String s = QuickHash.sha1().hash(String.join("", ls)).hex();
         log.debug("verify:> calculated signature: {}", s);
         if (!s.equals(signature)) {
-            throw RestletException.badRequest("invalid signature");
+            throw ResultException.badRequest("invalid signature");
         }
         return echostr;
     }
 
     @Override
-    public String getCodeUrl(String state, String redirectUri) throws RestletException {
-        Assert.notEmpty(config.getAppId(), RestletException.internalServerError("wechat appId can not be empty"));
-        Assert.notEmpty(config.getAppSecret(), RestletException.internalServerError("wechat appSecret can not be empty"));
-        Assert.notEmpty(config.getEndpoint(), RestletException.internalServerError("wechat endpoint can not be empty"));
-        Assert.notEmpty(config.getScope(), RestletException.internalServerError("wechat scope can not be empty"));
-        Assert.notEmpty(config.getResponseType(), RestletException.internalServerError("wechat responseType can not be empty"));
+    public String getCodeUrl(String state, String redirectUri) throws ResultException {
+        Assert.notEmpty(config.getAppId(), ResultException.internalServerError("wechat appId can not be empty"));
+        Assert.notEmpty(config.getAppSecret(), ResultException.internalServerError("wechat appSecret can not be empty"));
+        Assert.notEmpty(config.getEndpoint(), ResultException.internalServerError("wechat endpoint can not be empty"));
+        Assert.notEmpty(config.getScope(), ResultException.internalServerError("wechat scope can not be empty"));
+        Assert.notEmpty(config.getResponseType(), ResultException.internalServerError("wechat responseType can not be empty"));
         String s = null;
         try {
             s = config.getEndpoint() +
-                "?appid=" + config.getAppId() +
-                "&response_type=" + config.getResponseType() +
-                "&redirect_uri=" + URLEncoder.encode(redirectUri, "UTF-8") +
-                "&state=" + state +
-                "&scope=" + config.getScope() + "#wechat_redirect";
+                    "?appid=" + config.getAppId() +
+                    "&response_type=" + config.getResponseType() +
+                    "&redirect_uri=" + URLEncoder.encode(redirectUri, "UTF-8") +
+                    "&state=" + state +
+                    "&scope=" + config.getScope() + "#wechat_redirect";
         } catch (UnsupportedEncodingException e) {
-            throw RestletException.internalServerError("url encode failed");
+            throw ResultException.internalServerError("url encode failed");
         }
         return s;
+    }
+
+    @Override
+    public String resultPage(int ret, String message) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("<html>");
+        sb.append("<head>");
+        if (ret > OAuthState.INITIALIZED) {
+            sb.append("<title> 完 成 </title>");
+            sb.append("<script>");
+            sb.append("  function onBridgeReady() {\n" +
+                    "        console.log('WeixinJSBridge',WeixinJSBridge);\n" +
+                    "        WeixinJSBridge.call(\"closeWindow\");\n" +
+                    "    }\n" +
+                    "        if (typeof WeixinJSBridge === \"undefined\") {\n" +
+                    "            if (document.addEventListener) {\n" +
+                    "                document.addEventListener('WeixinJSBridgeReady', onBridgeReady, false);\n" +
+                    "            } else if (document.attachEvent) {\n" +
+                    "                document.attachEvent('WeixinJSBridgeReady', onBridgeReady);\n" +
+                    "                document.attachEvent('onWeixinJSBridgeReady', onBridgeReady);\n" +
+                    "            }\n" +
+                    "        } else {\n" +
+                    "            onBridgeReady();\n" +
+                    "    }");
+            sb.append("</script>");
+            sb.append("</head>");
+        } else {
+            sb.append("<title> 错 误 </title>");
+            sb.append("</head>");
+            sb.append("<body>");
+            sb.append("<p>" + message + "</p>");
+            sb.append("</body>");
+        }
+        sb.append("</html>");
+        return sb.toString();
     }
 
     /**
@@ -177,14 +212,14 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
      *
      * @param code code returned by provider
      * @return ProviderTokenResult
-     * @throws RestletException if errors
+     * @throws ResultException if errors
      */
-    public TokenResult getAccessToken(String code) throws RestletException {
+    public TokenResult getAccessToken(String code) throws ResultException {
         String accessTokenUrl = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=" + config.getAppId() + "&secret="
-            + config.getAppSecret() + "&code=" + code + "&grant_type=" + config.getGrantType();
+                + config.getAppSecret() + "&code=" + code + "&grant_type=" + config.getGrantType();
         HttpResponse resp = HttpRequest.get(accessTokenUrl).execute();
         if (resp.getStatus() != HttpStatus.HTTP_OK) {
-            throw RestletException.serviceUnavailable("request to wechat failed");
+            throw ResultException.serviceUnavailable("request to wechat failed");
         }
         Map<String, Object> map;
         ObjectMapper objectMapper = new ObjectMapper();
@@ -193,19 +228,19 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
             });
             log.debug("getAccessToken:> accessToken: {}", map);
         } catch (JsonProcessingException e) {
-            throw RestletException.serviceUnavailable("request to wechat failed: " + e.getMessage());
+            throw ResultException.serviceUnavailable("request to wechat failed: " + e.getMessage());
         }
-        Assert.notEmpty(map, RestletException.serviceUnavailable("request to wechat failed: invalid response"));
+        Assert.notEmpty(map, ResultException.serviceUnavailable("request to wechat failed: invalid response"));
         String accessToken = map.getOrDefault("access_token", "").toString();
-        Assert.notEmpty(accessToken, RestletException.serviceUnavailable("request to wechat failed: not included access_token"));
+        Assert.notEmpty(accessToken, ResultException.serviceUnavailable("request to wechat failed: not included access_token"));
         String refreshToken = map.getOrDefault("refresh_token", "").toString();
-        Assert.notEmpty(refreshToken, RestletException.serviceUnavailable("request to wechat failed: not included refresh_token"));
+        Assert.notEmpty(refreshToken, ResultException.serviceUnavailable("request to wechat failed: not included refresh_token"));
         String openid = map.getOrDefault("openid", "").toString();
-        Assert.notEmpty(openid, RestletException.serviceUnavailable("request to wechat failed: not included openid"));
+        Assert.notEmpty(openid, ResultException.serviceUnavailable("request to wechat failed: not included openid"));
         String unionid = map.getOrDefault("unionid", "").toString();
         int expires_in = (int) map.getOrDefault("expires_in", 0);
         TokenResult result = new TokenResult(
-            openid, unionid, accessToken, refreshToken, expires_in);
+                openid, unionid, accessToken, refreshToken, expires_in);
         Map<String, Object> userInfo = getUserInfo(accessToken, openid);
         result.extraInfo = userInfo;
         if (null != userInfo && !userInfo.isEmpty()) {
@@ -237,7 +272,7 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
      * @param openid
      * @return
      */
-    public Map<String, Object> getUserInfo(String accessToken, String openid) throws RestletException {
+    public Map<String, Object> getUserInfo(String accessToken, String openid) throws ResultException {
         Map<String, Object> result = new HashMap<>();
         Map<String, Object> mm;
         String accessUrl = "https://api.weixin.qq.com/sns/userinfo?access_token=" + accessToken + "&openid=" + openid;
@@ -265,7 +300,7 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
     /**
      * GET https://api.weixin.qq.com/sns/jscode2session?appid=APPID&secret=SECRET&js_code=JSCODE&grant_type=authorization_code
      */
-    public SessionResult getSessionKey(String code) throws RestletException {
+    public SessionResult getSessionKey(String code) throws ResultException {
         String getUrl = "https://api.weixin.qq.com/sns/jscode2session?";
         getUrl += "appid=" + config.getAppId();
         getUrl += "&secret=" + config.getAppSecret();
@@ -274,7 +309,7 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
         log.debug("getSessionKey:> {}", getUrl);
         HttpResponse resp = HttpRequest.get(getUrl).execute();
         if (resp.getStatus() != HttpStatus.HTTP_OK) {
-            throw RestletException.serviceUnavailable("no response");
+            throw ResultException.serviceUnavailable("no response");
         }
         Map<String, Object> map;
         ObjectMapper objectMapper = new ObjectMapper();
@@ -282,23 +317,23 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
             map = objectMapper.readValue(resp.body(), new TypeReference<Map<String, Object>>() {
             });
         } catch (JsonProcessingException e) {
-            throw RestletException.serviceUnavailable("request to wechat failed: " + e.getMessage());
+            throw ResultException.serviceUnavailable("request to wechat failed: " + e.getMessage());
         }
-        Assert.notEmpty(map, RestletException.serviceUnavailable("request to wechat failed: invalid response"));
+        Assert.notEmpty(map, ResultException.serviceUnavailable("request to wechat failed: invalid response"));
         if (map.containsKey("errcode") && !map.get("errcode").equals(0)) {
-            throw RestletException.serviceUnavailable("request to wechat failed: invalid errcode " + map.get("errcode"));
+            throw ResultException.serviceUnavailable("request to wechat failed: invalid errcode " + map.get("errcode"));
         }
         String openId = map.getOrDefault("openid", "").toString();
-        Assert.notEmpty(openId, RestletException.serviceUnavailable("request to wechat failed: not included openid"));
+        Assert.notEmpty(openId, ResultException.serviceUnavailable("request to wechat failed: not included openid"));
         String unionId = map.getOrDefault("unionid", "").toString();
 //        Assert.notEmpty(unionId, RestletException.serviceUnavailable("request to wechat failed: not included unionid"));
         String sessionKey = map.getOrDefault("session_key", "").toString();
-        Assert.notEmpty(sessionKey, RestletException.serviceUnavailable("request to wechat failed: not included session_key"));
+        Assert.notEmpty(sessionKey, ResultException.serviceUnavailable("request to wechat failed: not included session_key"));
         return new SessionResult(openId, unionId, sessionKey);
 
     }
 
-    public Map<String, Object> decryptViaSessionKey(String sessionKey, String encryptedData, String iv, String signature) throws RestletException {
+    public Map<String, Object> decryptViaSessionKey(String sessionKey, String encryptedData, String iv, String signature) throws ResultException {
         log.debug("decryptViaSessionKey:> sessionKey={}", sessionKey);
         log.debug("decryptViaSessionKey:> iv={}", iv);
         log.debug("decryptViaSessionKey:> signature={}", signature);
@@ -346,14 +381,15 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
                     }
                     return ret;
                 } catch (JsonProcessingException e) {
-                    throw RestletException.serviceUnavailable("request to wechat failed: " + e.getMessage());
+                    throw ResultException.serviceUnavailable("request to wechat failed: " + e.getMessage());
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            throw RestletException.badRequest(e.getMessage());
+
+            log.error(">>", e);
+            throw ResultException.badRequest(e.getMessage());
         }
-        throw RestletException.badRequest("unknown error on decrypt data");
+        throw ResultException.badRequest("unknown error on decrypt data");
     }
 
 /*
@@ -387,9 +423,9 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
 
 
     @Override
-    public OAuthState authorized(String code, String state, String via, OAuthState authState) throws RestletException {
-        Assert.notEmpty(code, RestletException.badRequest("invalid code"));
-        Assert.notNull(authState, RestletException.internalServerError("invalid authState"));
+    public OAuthState authorized(String code, String state, String via, OAuthState authState) throws ResultException {
+        Assert.notEmpty(code, ResultException.badRequest("invalid code"));
+        Assert.notNull(authState, ResultException.internalServerError("invalid authState"));
         if (SESSION_VIA.equals(via)) {
             SessionResult result = getSessionKey(code);
             authState.setOpenId(result.openId);
@@ -397,24 +433,25 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
         } else {
             TokenResult result = getAccessToken(code);
             authState.setOpenId(result.openId);
+            authState.setExtraInfo(result.extraInfo);
         }
         authState.setStatus(OAuthState.ID_PRESENTED);
         return authState;
     }
 
     @Override
-    public OAuthState authorizeUpdate(Map<String, Object> params, OAuthState authState) throws RestletException {
-        Assert.notEmpty(params, RestletException.badRequest("invalid params"));
-        Assert.notNull(authState, RestletException.internalServerError("invalid authState"));
+    public OAuthState authorizeUpdate(Map<String, Object> params, OAuthState authState) throws ResultException {
+        Assert.notEmpty(params, ResultException.badRequest("invalid params"));
+        Assert.notNull(authState, ResultException.internalServerError("invalid authState"));
         String raw = params.getOrDefault("raw", "").toString();
-        Assert.notEmpty(raw, RestletException.badRequest("raw required"));
+        Assert.notEmpty(raw, ResultException.badRequest("raw required"));
         String iv = params.getOrDefault("iv", "").toString();
-        Assert.notEmpty(iv, RestletException.badRequest("iv required"));
+        Assert.notEmpty(iv, ResultException.badRequest("iv required"));
         String signature = params.getOrDefault("signature", "").toString();
 //        Assert.notEmpty(signature, RestletException.badRequest("signature required"));
 
         Map<String, Object> rawMap = decryptViaSessionKey(authState.getSessionKey(), raw, iv, signature);
-        Assert.notEmpty(rawMap, RestletException.badRequest("invalid raw data"));
+        Assert.notEmpty(rawMap, ResultException.badRequest("invalid raw data"));
         if (authState.getExtraInfo() != null) {
             rawMap.putAll(authState.getExtraInfo());
         }

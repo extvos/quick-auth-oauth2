@@ -14,7 +14,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
-        <springboot.version>2.4.4</springboot.version>
+        <springboot.version>2.5.8</springboot.version>
         <shiro.version>1.4.0</shiro.version>
         <oltu.version>1.4.0</oltu.version>
     </properties>
@@ -24,8 +24,19 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
             <version>${springboot.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-to-slf4j</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
-
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <version>${springboot.version}</version>
+            <optional>true</optional>
+        </dependency>
         <!-- shiro spring. -->
         <dependency>
             <groupId>org.apache.shiro</groupId>
@@ -47,8 +58,15 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot</artifactId>
-            <version>2.4.2</version>
+            <version>${springboot.version}</version>
             <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger2</artifactId>
+            <version>2.9.2</version>
+            <!--            <scope>compile</scope>-->
         </dependency>
 
         <dependency>
@@ -105,8 +123,9 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>2.4.4</version>
+                <version>${springboot.version}</version>
             </plugin>
+
         </plugins>
     </build>
 
@@ -119,4 +138,33 @@
         </repository>
     </distributionManagement>
 
+
+    <licenses>
+        <license>
+            <name>GNU GPL v3</name>
+            <url>https://www.gnu.org/licenses/gpl.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Mingcai SHEN</name>
+            <email>archsh@gmail.com</email>
+            <organization>Shenzhen Cygnux Technologies Ltd.</organization>
+            <organizationUrl>https://www.cygnux.cn</organizationUrl>
+        </developer>
+    </developers>
+
+    <organization>
+        <name>Shenzhen Cygnux Technologies Ltd.</name>
+        <url>https://www.cygnux.cn</url>
+    </organization>
+
+    <scm>
+        <url>https://github.com/extvos/quick-auth-oauth2.git</url>
+        <connection>scm:git:git://github.com/extvos/quick-auth-oauth2.git</connection>
+        <developerConnection>scm:git:git@github.com:extvos/quick-auth-oauth2.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
 </project>

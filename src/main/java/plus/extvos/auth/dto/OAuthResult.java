@@ -73,4 +73,16 @@ public class OAuthResult {
     public void setExtraInfo(Map<String, Object> extraInfo) {
         this.extraInfo = extraInfo;
     }
+
+    @Override
+    public String toString() {
+        return "OAuthResult{" +
+                "session='" + session + '\'' +
+                ", id=" + userId +
+                ", username='" + username + '\'' +
+                ", openId='" + openId + '\'' +
+                ", extraInfo=" + extraInfo +
+                ", status=" + status +
+                '}';
+    }
 }
