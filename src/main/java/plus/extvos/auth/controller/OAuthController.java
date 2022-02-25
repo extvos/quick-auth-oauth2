@@ -40,10 +40,10 @@ import java.util.*;
 /**
  * OAuth2
  * Procedure 1:
- * ( Browser    ) QrCode  ----------------> Check Status ---------------------------------------->        Login
- * ( Mobile App )         |-> Access URL -> Redirect to OAuth2 Login URL -> Authorized URI -> Login Process -^
+ * ( Browser    ) QrCode  ----------------&gt; Check Status ----------------------------------------&gt;        Login
+ * ( Mobile App )         |-&gt; Access URL -&gt; Redirect to OAuth2 Login URL -&gt; Authorized URI -&gt; Login Process
  * Procedure 2:
- * ( Browser    ) URL -> Access URL -> Redirect to OAuth2 Login URL -> Authorized URI -> Login Process -> Login
+ * ( Browser    ) URL -&gt; Access URL -&gt; Redirect to OAuth2 Login URL -&gt; Authorized URI -&gt; Login Process -&gt; Login
  *
  * @author Mingcai SHEN
  */
@@ -337,13 +337,13 @@ public class OAuthController {
     }
 
     /**
-     * @param provider
-     * @param code
-     * @param state
-     * @param via
-     * @param response
-     * @return
-     * @throws ResultException
+     * @param provider name of provider
+     * @param code code in string
+     * @param state in string
+     * @param via in string
+     * @param response http response
+     * @return result of OAuthResult
+     * @throws ResultException when error
      */
     @ApiOperation(value = "第三方登录回调", notes = "via should be 'SESSIONKEY' when calling via Session Key mode")
     @GetMapping(value = "/{provider}/authorized")

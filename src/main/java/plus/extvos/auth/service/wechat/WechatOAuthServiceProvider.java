@@ -268,9 +268,9 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
      * <p>
      * }
      *
-     * @param accessToken
-     * @param openid
-     * @return
+     * @param accessToken in string
+     * @param openid in string
+     * @return map of user info
      */
     public Map<String, Object> getUserInfo(String accessToken, String openid) throws ResultException {
         Map<String, Object> result = new HashMap<>();
@@ -298,7 +298,10 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
     }
 
     /**
-     * GET https://api.weixin.qq.com/sns/jscode2session?appid=APPID&secret=SECRET&js_code=JSCODE&grant_type=authorization_code
+     * GET https%3A%2F%2Fapi.weixin.qq.com%2Fsns%2Fjscode2session%3Fappid%3DAPPID%26secret%3DSECRET%26js_code%3DJSCODE%26grant_type%3Dauthorization_code
+     * @param code in string
+     * @return session result
+     * @throws ResultException if error
      */
     public SessionResult getSessionKey(String code) throws ResultException {
         String getUrl = "https://api.weixin.qq.com/sns/jscode2session?";
