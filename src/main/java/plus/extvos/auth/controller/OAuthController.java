@@ -248,11 +248,14 @@ public class OAuthController {
 //            throw ResultException.notFound("state not exists");
         }
         if (subject.isAuthenticated()) {
-            if (authState.getStatus() != OAuthState.LOGGED_IN) {
-                UserInfo u = quickAuthService.getUserByName(subject.getPrincipal().toString(), true);
-//            authState = new OAuthState(sess.getId().toString());
+            if (authState.getStatus() >= OAuthState.ID_PRESENTED && authState.getStatus() != OAuthState.LOGGED_IN) {
+                UserInfo userInfo = authState.getUserInfo();
+                if (null == userInfo) {
+                    userInfo = quickAuthService.getUserByName(subject.getPrincipal().toString(), true);
+                    authState.setUserInfo(userInfo);
+                }
                 authState.setStatus(OAuthState.LOGGED_IN);
-                authState.setUserInfo(u);
+                sess.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
             }
         } else {
             if (authState.getStatus() >= OAuthState.ID_PRESENTED && authState.getStatus() < OAuthState.LOGGED_IN) {
