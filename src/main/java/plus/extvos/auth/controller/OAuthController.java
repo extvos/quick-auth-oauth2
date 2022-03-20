@@ -240,17 +240,19 @@ public class OAuthController {
         OAuthState authState;
         Subject subject = SecurityUtils.getSubject();
         Session sess = subject.getSession();
+        authState = (OAuthState) sess.getAttribute(OAuthState.OAUTH_STATE_KEY);
+        if (null == authState) {
+            authState = new OAuthState(sess.getId().toString());
+            authState.setStatus(OAuthState.INITIALIZED);
+            return Result.data(authState.asResult()).success();
+//            throw ResultException.notFound("state not exists");
+        }
         if (subject.isAuthenticated()) {
             UserInfo u = quickAuthService.getUserByName(subject.getPrincipal().toString(), true);
             authState = new OAuthState(sess.getId().toString());
             authState.setStatus(OAuthState.LOGGED_IN);
             authState.setUserInfo(u);
-
         } else {
-            authState = (OAuthState) sess.getAttribute(OAuthState.OAUTH_STATE_KEY);
-            if (null == authState) {
-                throw ResultException.notFound("state not exists");
-            }
             if (authState.getStatus() >= OAuthState.ID_PRESENTED && authState.getStatus() < OAuthState.LOGGED_IN) {
                 UserInfo userInfo = authState.getUserInfo();
                 if (userInfo != null) {
@@ -296,7 +298,7 @@ public class OAuthController {
             } else {
                 log.debug("buildAuthorizedResponse:> Generating output ...");
                 PrintWriter writer = response.getWriter();
-                writer.write(provider.resultPage(ret,err));
+                writer.write(provider.resultPage(ret, err));
 //                writer.println("<html>");
 //                writer.println("<head>");
 //                if (ret > OAuthState.INITIALIZED) {
@@ -338,9 +340,9 @@ public class OAuthController {
 
     /**
      * @param provider name of provider
-     * @param code code in string
-     * @param state in string
-     * @param via in string
+     * @param code     code in string
+     * @param state    in string
+     * @param via      in string
      * @param response http response
      * @return result of OAuthResult
      * @throws ResultException when error
