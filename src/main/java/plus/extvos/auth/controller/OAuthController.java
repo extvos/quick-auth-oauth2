@@ -248,10 +248,12 @@ public class OAuthController {
 //            throw ResultException.notFound("state not exists");
         }
         if (subject.isAuthenticated()) {
-            UserInfo u = quickAuthService.getUserByName(subject.getPrincipal().toString(), true);
-            authState = new OAuthState(sess.getId().toString());
-            authState.setStatus(OAuthState.LOGGED_IN);
-            authState.setUserInfo(u);
+            if (authState.getStatus() != OAuthState.LOGGED_IN) {
+                UserInfo u = quickAuthService.getUserByName(subject.getPrincipal().toString(), true);
+//            authState = new OAuthState(sess.getId().toString());
+                authState.setStatus(OAuthState.LOGGED_IN);
+                authState.setUserInfo(u);
+            }
         } else {
             if (authState.getStatus() >= OAuthState.ID_PRESENTED && authState.getStatus() < OAuthState.LOGGED_IN) {
                 UserInfo userInfo = authState.getUserInfo();
@@ -299,40 +301,9 @@ public class OAuthController {
                 log.debug("buildAuthorizedResponse:> Generating output ...");
                 PrintWriter writer = response.getWriter();
                 writer.write(provider.resultPage(ret, err));
-//                writer.println("<html>");
-//                writer.println("<head>");
-//                if (ret > OAuthState.INITIALIZED) {
-//                    writer.println("<title> 完 成 </title>");
-//                    writer.println("<script>");
-////                    writer.println("  window.open('','_self','');");
-//                    writer.println("  function onBridgeReady() {\n" +
-//                            "        console.log('WeixinJSBridge',WeixinJSBridge);\n" +
-//                            "        WeixinJSBridge.call(\"closeWindow\");\n" +
-//                            "    }\n" +
-//                            "        if (typeof WeixinJSBridge === \"undefined\") {\n" +
-//                            "            if (document.addEventListener) {\n" +
-//                            "                document.addEventListener('WeixinJSBridgeReady', onBridgeReady, false);\n" +
-//                            "            } else if (document.attachEvent) {\n" +
-//                            "                document.attachEvent('WeixinJSBridgeReady', onBridgeReady);\n" +
-//                            "                document.attachEvent('onWeixinJSBridgeReady', onBridgeReady);\n" +
-//                            "            }\n" +
-//                            "        } else {\n" +
-//                            "            onBridgeReady();\n" +
-//                            "    }");
-//                    writer.println("</script>");
-//                    writer.println("</head>");
-//                } else {
-//                    writer.println("<title> 错 误 </title>");
-//                    writer.println("</head>");
-//                    writer.println("<body>");
-//                    writer.println("<p>" + err + "</p>");
-//                    writer.println("</body>");
-//                }
-//                writer.println("</html>");
                 writer.close();
             }
         } catch (IOException e) {
-
             log.error(">>", e);
         }
         return null;
