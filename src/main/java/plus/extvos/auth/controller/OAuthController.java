@@ -382,13 +382,28 @@ public class OAuthController {
                 return Result.data(authState.asResult()).success();
             } else { // if (Validator.notEmpty(extraInfo))
                 log.debug("authorized:> try to register user ...");
-                authInfo = openidResolver.register(provider, openId, currentUsername, null, extraInfo);
-                authState.setExtraInfo(authInfo.getExtraInfo());
+                try {
+                    authInfo = openidResolver.register(provider, openId, currentUsername, null, extraInfo);
+                    authState.setExtraInfo(authInfo.getExtraInfo());
+                } catch (ResultException e) {
+                    authState.setStatus(OAuthState.FAILED);
+                    authState.setError(e.getMessage());
+                    session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
+                    if (external) {
+                        return buildAuthorizedResponse(oAuthProvider, response, OAuthState.FAILED, e.getMessage());
+                    } else {
+                        throw ResultException.forbidden(e.getMessage());
+                    }
+                }
+
             } /* else {
                 log.debug("authorized:> empty extraInfo, skipping register user ...");
                 return Result.data(authState.asResult()).success();
             } */
             if (null == authInfo) {
+                authState.setStatus(OAuthState.FAILED);
+                authState.setError("auto register openid '" + openId + "' failed.");
+                session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
                 if (external) {
                     return buildAuthorizedResponse(oAuthProvider, response, OAuthState.FAILED, "auto register openid '" + openId + "' failed.");
                 } else {
@@ -436,6 +451,9 @@ public class OAuthController {
             } catch (Exception e) {
                 log.error("getAuthorizedStatus:> try to login failed by {} ", userInfo.getUsername(), e);
                 tk.clear();
+                authState.setStatus(OAuthState.FAILED);
+                authState.setError(e.getMessage());
+                session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
                 if (external) {
                     return buildAuthorizedResponse(oAuthProvider, response, OAuthState.FAILED, "try to login failed");
                 } else {
