@@ -374,7 +374,19 @@ public class OAuthController {
         authState.setOpenId(openId);
         authState.setStatus(OAuthState.ID_PRESENTED);
         session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
-        OAuthInfo authInfo = openidResolver.resolve(provider, openId, currentUserId, extraInfo);
+        OAuthInfo authInfo = null;
+        try {
+            authInfo = openidResolver.resolve(provider, openId, currentUserId, extraInfo);
+        } catch (ResultException e) {
+            authState.setStatus(OAuthState.FAILED);
+            authState.setError(e.getMessage());
+            session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
+            if (external) {
+                return buildAuthorizedResponse(oAuthProvider, response, OAuthState.FAILED, e.getMessage());
+            } else {
+                throw ResultException.forbidden(e.getMessage());
+            }
+        }
         if (null == authInfo) {
             log.debug("authorized:> not get user by openId({}) and userId({})", openId, currentUserId);
             if (!autoRegister && currentUserId == null) {
