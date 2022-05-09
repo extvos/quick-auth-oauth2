@@ -204,7 +204,7 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
             sb.append("<i class=\"weui_icon_warn weui_icon_msg\"></i>");
             sb.append("</div>");
             sb.append("<div class=\"weui_text_area\">");
-            sb.append("<h4 class=\"weui_msg_title\">\" + message + \"</h4>");
+            sb.append("<h4 class=\"weui_msg_title\">" + message + "</h4>");
             sb.append("</div>");
             sb.append("</div>");
             sb.append("</body>");
