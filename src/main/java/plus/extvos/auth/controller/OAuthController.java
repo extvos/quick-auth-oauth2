@@ -391,7 +391,15 @@ public class OAuthController {
             log.debug("authorized:> not get user by openId({}) and userId({})", openId, currentUserId);
             if (!autoRegister && currentUserId == null) {
                 log.debug("authorized:> authInfo of {} not resolved, auto register disabled.", openId);
-                return Result.data(authState.asResult()).success();
+//                return Result.data(authState.asResult()).success();
+                authState.setStatus(OAuthState.FAILED);
+                authState.setError("user not registered");
+                session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
+                if (external) {
+                    return buildAuthorizedResponse(oAuthProvider, response, OAuthState.FAILED, "user not registered");
+                } else {
+                    throw ResultException.forbidden("user not registered");
+                }
             } else { // if (Validator.notEmpty(extraInfo))
                 log.debug("authorized:> try to register user ...");
                 try {
