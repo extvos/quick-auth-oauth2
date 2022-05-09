@@ -172,6 +172,9 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
         sb.append("<head>");
         if (ret > OAuthState.INITIALIZED) {
             sb.append("<title> 完 成 </title>");
+            sb.append("<meta charset=\"utf-8\">");
+            sb.append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=0\">");
+            sb.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"https://res.wx.qq.com/open/libs/weui/0.4.1/weui.css\">");
             sb.append("<script>");
             sb.append("  function onBridgeReady() {\n" +
                     "        console.log('WeixinJSBridge',WeixinJSBridge);\n" +
@@ -191,9 +194,19 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
             sb.append("</head>");
         } else {
             sb.append("<title> 错 误 </title>");
+            sb.append("<meta charset=\"utf-8\">");
+            sb.append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=0\">");
+            sb.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"https://res.wx.qq.com/open/libs/weui/0.4.1/weui.css\">");
             sb.append("</head>");
             sb.append("<body>");
-            sb.append("<p>" + message + "</p>");
+            sb.append("<div class=\"weui_msg\">");
+            sb.append("<div class=\"weui_icon_area\">");
+            sb.append("<i class=\"weui_icon_warn weui_icon_msg\"></i>");
+            sb.append("</div>");
+            sb.append("<div class=\"weui_text_area\">");
+            sb.append("<h4 class=\"weui_msg_title\">\" + message + \"</h4>");
+            sb.append("</div>");
+            sb.append("</div>");
             sb.append("</body>");
         }
         sb.append("</html>");
@@ -269,7 +282,7 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
      * }
      *
      * @param accessToken in string
-     * @param openid in string
+     * @param openid      in string
      * @return map of user info
      */
     public Map<String, Object> getUserInfo(String accessToken, String openid) throws ResultException {
@@ -299,6 +312,7 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
 
     /**
      * GET https%3A%2F%2Fapi.weixin.qq.com%2Fsns%2Fjscode2session%3Fappid%3DAPPID%26secret%3DSECRET%26js_code%3DJSCODE%26grant_type%3Dauthorization_code
+     *
      * @param code in string
      * @return session result
      * @throws ResultException if error
