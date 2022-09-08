@@ -6,7 +6,7 @@ import java.util.Map;
 /**
  * @author Mingcai SHEN
  */
-public class OAuthResult {
+public class OAuthResult  implements Serializable {
     private String session;
     private Serializable userId;
     private String username;

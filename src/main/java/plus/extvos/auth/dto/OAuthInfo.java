@@ -8,7 +8,7 @@ import java.util.Map;
  *
  * @author shenmc
  */
-public class OAuthInfo {
+public class OAuthInfo implements Serializable {
     private Serializable id;
     private Serializable userId;
     private String provider;
