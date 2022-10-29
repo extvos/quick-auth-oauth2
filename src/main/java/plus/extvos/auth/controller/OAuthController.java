@@ -20,6 +20,7 @@ import plus.extvos.auth.dto.OAuthState;
 import plus.extvos.auth.dto.UserInfo;
 import plus.extvos.auth.service.*;
 import plus.extvos.auth.shiro.QuickToken;
+import plus.extvos.auth.utils.SessionUtil;
 import plus.extvos.common.Assert;
 import plus.extvos.common.Result;
 import plus.extvos.common.Validator;
@@ -312,6 +313,42 @@ public class OAuthController {
         return null;
     }
 
+    @ApiOperation(value = "用户注册", notes = "扫码后未注册用户")
+    @GetMapping(value = "/{provider}/register")
+    public Result<OAuthResult> register(@PathVariable("provider") String provider,
+                                        @RequestParam(value = "username") String username,
+                                        @RequestParam(value = "password") String password,
+                                        @RequestParam(value = "cellphone", required = false) String cellphone,
+                                        @RequestParam(value = "captcha", required = false) String captcha,
+                                        @RequestParam(value = "email", required = false) String email) throws ResultException {
+        if (!quickAuthConfig.isRegisterAllowed()) {
+            throw ResultException.forbidden("registration not allowed");
+        }
+        OAuthProvider oAuthProvider = getProvider(provider);
+        Assert.notEmpty(username, ResultException.badRequest("username required"));
+        Assert.notEmpty(password, ResultException.badRequest("password required"));
+        if (quickAuthConfig.isPhoneRequired()) {
+            Assert.notEmpty(cellphone, ResultException.badRequest("cellphone required"));
+        }
+        if(quickAuthConfig.isCaptchaRequired()) {
+            Assert.notEmpty(captcha, ResultException.badRequest("captcha required"));
+            SessionUtil.validateCaptcha(captcha, ResultException.forbidden("invalid captcha"));
+        }
+        Map<String,Object> params = new HashMap<>();
+        Subject subject = SecurityUtils.getSubject();
+        Session session = subject.getSession(false);
+        Assert.notNull(session, ResultException.forbidden("not in session"));
+        OAuthState authState = (OAuthState) session.getAttribute(OAuthState.OAUTH_STATE_KEY);
+        Assert.notNull(authState, ResultException.forbidden("not in oauth session"));
+        Assert.notNull(authState.getAuthInfo(), ResultException.forbidden("no authInfo presented in oauth session"));
+        Assert.notEmpty(authState.getAuthInfo().getOpenId(),ResultException.forbidden("openId presented in oauth session"));
+        Assert.equals(authState.getStatus(), OAuthState.NEED_REGISTER, ResultException.forbidden("not in NEED_REGISTER state"));
+        UserInfo userInfo = quickAuthService.getUserByName(username, false);
+        Assert.isNull(userInfo, ResultException.forbidden("username already exists"));
+        OAuthInfo oAuthInfo = openidResolver.register(provider, authState.getAuthInfo().getOpenId(), username,password, params);
+        throw ResultException.notImplemented();
+    }
+
     /**
      * @param provider name of provider
      * @param code     code in string
@@ -387,48 +424,13 @@ public class OAuthController {
                 throw ResultException.forbidden(e.getMessage());
             }
         }
-        if (null == authInfo) {
-            log.debug("authorized:> not get user by openId({}) and userId({})", openId, currentUserId);
-            if (!autoRegister && currentUserId == null) {
-                log.debug("authorized:> authInfo of {} not resolved, auto register disabled.", openId);
-//                return Result.data(authState.asResult()).success();
-                authState.setStatus(OAuthState.FAILED);
-                authState.setError("user not registered");
-                session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
-                if (external) {
-                    return buildAuthorizedResponse(oAuthProvider, response, OAuthState.FAILED, "user not registered");
-                } else {
-                    throw ResultException.forbidden("user not registered");
-                }
-            } else { // if (Validator.notEmpty(extraInfo))
-                log.debug("authorized:> try to register user ...");
-                try {
-                    authInfo = openidResolver.register(provider, openId, currentUsername, null, extraInfo);
-                    authState.setExtraInfo(authInfo.getExtraInfo());
-                } catch (ResultException e) {
-                    authState.setStatus(OAuthState.FAILED);
-                    authState.setError(e.getMessage());
-                    session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
-                    if (external) {
-                        return buildAuthorizedResponse(oAuthProvider, response, OAuthState.FAILED, e.getMessage());
-                    } else {
-                        throw ResultException.forbidden(e.getMessage());
-                    }
-                }
-
-            } /* else {
-                log.debug("authorized:> empty extraInfo, skipping register user ...");
+        if (null == authInfo) {  // Not getting user info, need to register...
+            authState.setStatus(OAuthState.NEED_REGISTER);
+            session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
+            if (external) {
+                return buildAuthorizedResponse(oAuthProvider, response, authState.getStatus(), "");
+            } else {
                 return Result.data(authState.asResult()).success();
-            } */
-            if (null == authInfo) {
-                authState.setStatus(OAuthState.FAILED);
-                authState.setError("auto register openid '" + openId + "' failed.");
-                session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
-                if (external) {
-                    return buildAuthorizedResponse(oAuthProvider, response, OAuthState.FAILED, "auto register openid '" + openId + "' failed.");
-                } else {
-                    throw ResultException.forbidden("auto register openid '" + openId + "' failed.");
-                }
             }
         } else if (Validator.notEmpty(extraInfo)) {
             log.debug("authorized:> userInfo of {} resolved as {}, try to update...", openId, authInfo.getUserId());
@@ -440,16 +442,16 @@ public class OAuthController {
         userInfo.setExtraInfo(authInfo.getExtraInfo());
         authState.setUserInfo(userInfo);
         authState.setAuthInfo(authInfo);
-        authState.setStatus(OAuthState.INFO_PRESENTED);
-        session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
-        if (quickAuthConfig.isPhoneRequired() && Validator.isEmpty(userInfo.getCellphone())) {
-            log.debug("authorized:> use cellphone not presented ...");
-            if (external) {
-                return buildAuthorizedResponse(oAuthProvider, response, authState.getStatus(), "");
-            } else {
-                return Result.data(authState.asResult()).success();
-            }
-        }
+//        authState.setStatus(OAuthState.INFO_PRESENTED);
+//        session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
+//        if (quickAuthConfig.isPhoneRequired() && Validator.isEmpty(userInfo.getCellphone())) {
+//            log.debug("authorized:> use cellphone not presented ...");
+//            if (external) {
+//                return buildAuthorizedResponse(oAuthProvider, response, authState.getStatus(), "");
+//            } else {
+//                return Result.data(authState.asResult()).success();
+//            }
+//        }
         // Do the login if state in current session.
         if (authState.getSessionId().equals(subject.getSession().getId().toString())) {
             log.debug("authorized:> trying to login account {} / {}  / {} ...", userInfo.getUsername(), authState.getOpenId(), userInfo.getPassword());

@@ -288,9 +288,10 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
     public Map<String, Object> getUserInfo(String accessToken, String openid) throws ResultException {
         Map<String, Object> result = new HashMap<>();
         Map<String, Object> mm;
-        String accessUrl = "https://api.weixin.qq.com/sns/userinfo?access_token=" + accessToken + "&openid=" + openid;
+        String accessUrl = "https://api.weixin.qq.com/sns/userinfo?access_token=" + accessToken + "&openid=" + openid+"&lang=zh_CN";
         HttpResponse resp = HttpRequest.get(accessUrl).execute();
         if (resp.getStatus() != HttpStatus.HTTP_OK) {
+            log.warn("getUserInfo failed: {}", resp.getStatus());
             return null;
         }
         ObjectMapper objectMapper = new ObjectMapper();
@@ -298,8 +299,10 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
             mm = objectMapper.readValue(resp.body(), new TypeReference<Map<String, Object>>() {
             });
         } catch (JsonProcessingException e) {
+            log.warn("getUserInfo error:>", e);
             return null;
         }
+        log.debug("getUserInfo:> {}", mm);
         for (String key : keyMap) {
             String[] ks = key.split(":");
             if (mm.containsKey(ks[1])) {

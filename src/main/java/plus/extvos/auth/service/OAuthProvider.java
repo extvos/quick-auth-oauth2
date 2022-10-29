@@ -81,6 +81,8 @@ public interface OAuthProvider {
      */
     String resultPage(int ret, String message);
 
+//    String registerPage();
+
 
 //    /**
 //     * Get access token info via code
