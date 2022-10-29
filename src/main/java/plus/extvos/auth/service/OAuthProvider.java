@@ -74,12 +74,21 @@ public interface OAuthProvider {
     String getCodeUrl(String state, String redirectUri) throws ResultException;
 
     /**
-     * Generate a default result page when redirectUri not specified.
-     * @param ret authState
-     * @param message error message
-     * @return out put as String
+     * @return successUrl when login success to redirect
      */
-    String resultPage(int ret, String message);
+    String successUrl();
+
+    /**
+     *
+     * @return failedUrl when login failed to redirect
+     */
+    String failedUrl();
+
+    /**
+     *
+     * @return registerUrl when login need to register
+     */
+    String registerUrl();
 
 //    String registerPage();
 
