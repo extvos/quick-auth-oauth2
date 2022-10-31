@@ -24,8 +24,8 @@ public class OAuthState implements Serializable {
     public static final int ACCEPTED = 2;
     public static final int ID_PRESENTED = 3;
     public static final int INFO_PRESENTED = 4;
-    public static final int NEED_REGISTER = 4;
-    public static final int LOGGED_IN = 5;
+    public static final int NEED_REGISTER = 5;
+    public static final int LOGGED_IN = 6;
 
     public static final String OAUTH_STATE_KEY = "QUICK_OAUTH_STATE";
 
