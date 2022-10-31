@@ -165,73 +165,73 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
         return s;
     }
 
-    /**
-     * @return successUrl when login success to redirect
-     */
     @Override
-    public String successUrl() {
-        return null;
-    }
-
-    /**
-     * @return failedUrl when login failed to redirect
-     */
-    @Override
-    public String failedUrl() {
-        return null;
-    }
-
-    /**
-     * @return registerUrl when login need to register
-     */
-    @Override
-    public String registerUrl() {
-        return null;
-    }
-
     public String resultPage(int ret, String message) {
         StringBuffer sb = new StringBuffer();
+        String title = "";
+        String tips = "";
+        String icon = "weui_icon_warn";
+        String error = "";
+
+        if (ret >= OAuthState.LOGGED_IN) {
+            title = "完 成";
+            tips = "您已完成扫码登录";
+            icon = "weui_icon_success";
+        } else if (ret < OAuthState.INITIALIZED) {
+            title = "错 误";
+            error = message;
+            icon = "weui_icon_warn";
+        } else if (ret == OAuthState.NEED_REGISTER) {
+            title = "提 醒";
+            tips = "您尚未注册用户，请根据页面提示完成注册绑定操作";
+            icon = "weui_icon_info";
+        } else {
+            title = "提 醒";
+            tips = "进行中，请稍候...";
+            icon = "weui_icon_info";
+        }
+
         sb.append("<html>");
         sb.append("<head>");
-        if (ret > OAuthState.INITIALIZED) {
-            sb.append("<title> 完 成 </title>");
-            sb.append("<meta charset=\"utf-8\">");
-            sb.append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=0\">");
-            sb.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"https://res.wx.qq.com/open/libs/weui/0.4.1/weui.css\">");
-            sb.append("<script>");
-            sb.append("  function onBridgeReady() {\n" +
-                    "        console.log('WeixinJSBridge',WeixinJSBridge);\n" +
-                    "        WeixinJSBridge.call(\"closeWindow\");\n" +
-                    "    }\n" +
-                    "        if (typeof WeixinJSBridge === \"undefined\") {\n" +
-                    "            if (document.addEventListener) {\n" +
-                    "                document.addEventListener('WeixinJSBridgeReady', onBridgeReady, false);\n" +
-                    "            } else if (document.attachEvent) {\n" +
-                    "                document.attachEvent('WeixinJSBridgeReady', onBridgeReady);\n" +
-                    "                document.attachEvent('onWeixinJSBridgeReady', onBridgeReady);\n" +
-                    "            }\n" +
-                    "        } else {\n" +
-                    "            onBridgeReady();\n" +
-                    "    }");
-            sb.append("</script>");
-            sb.append("</head>");
-        } else {
-            sb.append("<title> 错 误 </title>");
-            sb.append("<meta charset=\"utf-8\">");
-            sb.append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=0\">");
-            sb.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"https://res.wx.qq.com/open/libs/weui/0.4.1/weui.css\">");
-            sb.append("</head>");
-            sb.append("<body>");
-            sb.append("<div class=\"weui_msg\">");
-            sb.append("<div class=\"weui_icon_area\">");
-            sb.append("<i class=\"weui_icon_warn weui_icon_msg\"></i>");
-            sb.append("</div>");
-            sb.append("<div class=\"weui_text_area\">");
+        sb.append("<title> " + title + " </title>");
+        sb.append("<meta charset=\"utf-8\">");
+        sb.append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=0\">");
+        sb.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"https://res.wx.qq.com/open/libs/weui/0.4.1/weui.css\">");
+        sb.append("<script>");
+        sb.append("var bridge = null;");
+        sb.append("  function closeWin() {\n" +
+                "       if (bridge) { bridge.call(\"closeWindow\"); }" +
+                "     }");
+        sb.append("  function onBridgeReady() {\n" +
+                "        console.log('WeixinJSBridge',WeixinJSBridge);\n" +
+                "        bridge = WeixinJSBridge;\n" +
+                "    }\n" +
+                "        if (typeof WeixinJSBridge === \"undefined\") {\n" +
+                "            if (document.addEventListener) {\n" +
+                "                document.addEventListener('WeixinJSBridgeReady', onBridgeReady, false);\n" +
+                "            } else if (document.attachEvent) {\n" +
+                "                document.attachEvent('WeixinJSBridgeReady', onBridgeReady);\n" +
+                "                document.attachEvent('onWeixinJSBridgeReady', onBridgeReady);\n" +
+                "            }\n" +
+                "        } else {\n" +
+                "            onBridgeReady();\n" +
+                "    }");
+        sb.append("</script>");
+        sb.append("<body>");
+        sb.append("<div class=\"weui_msg\">");
+        sb.append("<div class=\"weui_icon_area\">");
+        sb.append("<i class=\"" + icon + " weui_icon_msg\"></i>");
+        sb.append("</div>");
+        sb.append("<div class=\"weui_text_area\">");
+        if (null != message && !message.isEmpty()) {
             sb.append("<h4 class=\"weui_msg_title\">" + message + "</h4>");
-            sb.append("</div>");
-            sb.append("</div>");
-            sb.append("</body>");
+        } else {
+            sb.append("<h4 class=\"weui_msg_title\">" + tips + "</h4>");
         }
+        sb.append("<a href=\"javascript:closeWin();\" class=\"weui_btn weui_btn_primary\">关闭</a>");
+        sb.append("</div>");
+        sb.append("</div>");
+        sb.append("</body>");
         sb.append("</html>");
         return sb.toString();
     }
@@ -311,7 +311,7 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
     public Map<String, Object> getUserInfo(String accessToken, String openid) throws ResultException {
         Map<String, Object> result = new HashMap<>();
         Map<String, Object> mm;
-        String accessUrl = "https://api.weixin.qq.com/sns/userinfo?access_token=" + accessToken + "&openid=" + openid+"&lang=zh_CN";
+        String accessUrl = "https://api.weixin.qq.com/sns/userinfo?access_token=" + accessToken + "&openid=" + openid + "&lang=zh_CN";
         HttpResponse resp = HttpRequest.get(accessUrl).execute();
         if (resp.getStatus() != HttpStatus.HTTP_OK) {
             log.warn("getUserInfo failed: {}", resp.getStatus());
