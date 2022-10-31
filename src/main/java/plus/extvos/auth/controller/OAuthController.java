@@ -371,7 +371,6 @@ public class OAuthController {
             roles = userRegisterHook.defaultRoles(UserRegisterHook.OPEN);
             status = userRegisterHook.defaultStatus(UserRegisterHook.OPEN);
         } else {
-
             status = quickAuthConfig.getDefaultStatus();
             perms = quickAuthConfig.getDefaultPermissions().split(",");
             roles = quickAuthConfig.getDefaultRoles().split(",");
