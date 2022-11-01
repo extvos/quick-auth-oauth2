@@ -363,6 +363,7 @@ public class OAuthController {
                 userInfo = quickAuthCallback.onLoggedIn(userInfo);
             }
             OAuthInfo oAuthInfo = openidResolver.register(provider, authState.getOpenId(), userInfo.getUsername(), userInfo.getPassword(), authState.getExtraInfo());
+            Assert.notNull(oAuthInfo, ResultException.serviceUnavailable("create user failed"));
             Assert.notNull(oAuthInfo.getUserId(), ResultException.serviceUnavailable("create user failed"));
             authState.setAuthInfo(oAuthInfo);
             userInfo.setOpenId(oAuthInfo.getOpenId());
@@ -377,6 +378,8 @@ public class OAuthController {
         } catch (Exception e) {
             log.error("getAuthorizedStatus:> try to login failed by {} ", username, e);
             tk.clear();
+            session.removeAttribute(UserInfo.USER_INFO_KEY);
+            session.removeAttribute(OAuthState.OAUTH_STATE_KEY);
             throw ResultException.forbidden("try to login failed");
         }
         return Result.data(userInfo).success();
