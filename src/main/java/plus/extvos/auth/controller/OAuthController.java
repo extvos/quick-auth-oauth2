@@ -321,12 +321,73 @@ public class OAuthController {
         return null;
     }
 
-    @ApiOperation(value = "用户注册(OAuth)", notes = "扫码后未注册用户")
+    @ApiOperation(value = "用户登录并绑定(OAuth)", notes = "扫码后未绑定用户")
+    @PostMapping(value = "/{provider}/login")
+    public Result<UserInfo> loginUser(@PathVariable("provider") String provider,
+                                      @RequestParam(value = "username", required = false) String username,
+                                      @RequestParam(value = "password", required = false) String password,
+                                      @RequestParam(value = "salt", required = false) String salt,
+                                      @RequestParam(value = "algorithm", required = false) String algorithm,
+                                      @RequestParam(value = "captcha", required = false) String captcha,
+                                      @RequestParam(value = "verifier", required = false) String verifier,
+                                      @RequestBody(required = false) Map<String, String> params) throws ResultException {
+        OAuthProvider oAuthProvider = getProvider(provider);
+        Subject subject = SecurityUtils.getSubject();
+        Session session = subject.getSession();
+        Assert.notNull(session, ResultException.forbidden("not in session"));
+        OAuthState authState = (OAuthState) session.getAttribute(OAuthState.OAUTH_STATE_KEY);
+        Assert.notNull(authState, ResultException.forbidden("not in oauth session"));
+        Assert.notEmpty(authState.getOpenId(), ResultException.forbidden("openId presented in oauth session"));
+        Assert.equals(authState.getStatus(), OAuthState.NEED_REGISTER, ResultException.forbidden("not in NEED_REGISTER state"));
+        if (quickAuthConfig.isRegisterCaptchaRequired() || captcha != null) {
+            Assert.notEmpty(captcha, new ResultException(AuthCode.CAPTCHA_REQUIRED, "Captcha required!"));
+            SessionUtil.validateCaptcha(captcha, new ResultException(AuthCode.INCORRECT_CAPTCHA, "Incorrect captcha"));
+        }
+        if (quickAuthConfig.isRegisterVerifierRequired() || verifier != null) {
+            Assert.notEmpty(verifier, new ResultException(AuthCode.VERIFIER_REQUIRED, "Verifier required!"));
+            SessionUtil.validateVerifier(verifier, new ResultException(AuthCode.INCORRECT_VERIFIER, "Incorrect verifier"));
+        }
+        if (Validator.notEmpty(params)) {
+            username = params.getOrDefault("username", username).toString();
+            password = params.getOrDefault("password", password).toString();
+            salt = params.getOrDefault("salt", salt == null ? "" : salt).toString();
+            algorithm = params.getOrDefault("algorithm", algorithm == null ? "" : algorithm).toString();
+        }
+        UserInfo userInfo;
+        QuickToken tk = new QuickToken(username, password, algorithm, salt);
+        try {
+            subject.login(tk);
+            userInfo = quickAuthService.getUserByName(username, false);
+            userInfo = quickAuthService.fillUserInfo(userInfo);
+            if (null != quickAuthCallback) {
+                userInfo = quickAuthCallback.onLoggedIn(userInfo);
+            }
+            OAuthInfo oAuthInfo = openidResolver.register(provider, authState.getOpenId(), userInfo.getUsername(), userInfo.getPassword(), null);
+            Assert.notNull(oAuthInfo.getUserId(), ResultException.serviceUnavailable("create user failed"));
+            authState.setAuthInfo(oAuthInfo);
+            userInfo.setOpenId(oAuthInfo.getOpenId());
+            userInfo.setProvider(provider);
+            authState.setUserInfo(userInfo);
+            authState.setStatus(OAuthState.LOGGED_IN);
+            session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
+            userInfo.setProvider(provider);
+            userInfo.setExtraInfo(authState.getExtraInfo());
+            userInfo.setOpenId(authState.getOpenId());
+            session.setAttribute(UserInfo.USER_INFO_KEY, userInfo);
+        } catch (Exception e) {
+            log.error("getAuthorizedStatus:> try to login failed by {} ", username, e);
+            tk.clear();
+            throw ResultException.forbidden("try to login failed");
+        }
+        return Result.data(userInfo).success();
+    }
+
+    @ApiOperation(value = "用户注册并绑定(OAuth)", notes = "扫码后未注册用户")
     @PostMapping(value = "/{provider}/register")
     public Result<UserInfo> registerUser(@PathVariable("provider") String provider,
                                          @RequestParam(value = "username", required = false) String username,
                                          @RequestParam(value = "password", required = false) String password,
-                                         @RequestParam(value = "cellphone", required = false) String cellphone,
+                                         @RequestParam(value = "phoneNumber", required = false) String phoneNumber,
                                          @RequestParam(value = "captcha", required = false) String captcha,
                                          @RequestParam(value = "email", required = false) String email,
                                          @RequestParam(value = "verifier", required = false) String verifier,
@@ -358,11 +419,22 @@ public class OAuthController {
         if (Validator.notEmpty(params)) {
             username = params.getOrDefault("username", username).toString();
             password = params.getOrDefault("password", password).toString();
+            phoneNumber = params.getOrDefault("phoneNumber", phoneNumber == null ? "" : phoneNumber).toString();
+            email = params.getOrDefault("email", email == null ? "" : email).toString();
             params.remove("username");
             params.remove("password");
+        } else {
+            params = new HashMap<>();
+        }
+        if (null != phoneNumber && !params.containsKey("phoneNumber")) {
+            params.put("phoneNumber", phoneNumber);
+        }
+        if (null != email && !params.containsKey("email")) {
+            params.put("email", email);
         }
         Assert.notEmpty(username, ResultException.forbidden("invalid empty username"));
         Assert.notEmpty(password, ResultException.forbidden("invalid empty password"));
+
         if (userRegisterHook != null) {
             if (!userRegisterHook.preRegister(username, password, params, UserRegisterHook.OPEN)) {
                 throw ResultException.forbidden("not allowed to register user");
@@ -382,15 +454,14 @@ public class OAuthController {
         Serializable userId = quickAuthService.createUserInfo(username, password, status, perms, roles, params);
         Assert.notNull(userId, ResultException.serviceUnavailable("create user failed"));
         OAuthInfo oAuthInfo = openidResolver.register(provider, authState.getOpenId(), username, password, params);
-
         Assert.notNull(oAuthInfo.getUserId(), ResultException.serviceUnavailable("create user failed"));
-        UserInfo userInfo = new UserInfo(userId, username, "", "", "");
+        UserInfo userInfo = new UserInfo(userId, username, password, phoneNumber, email);
         if (Validator.notEmpty(params)) {
             if (params.containsKey("email")) {
                 userInfo.setEmail(params.get("email").toString());
             }
-            if (params.containsKey("cellphone")) {
-                userInfo.setCellphone(params.get("cellphone").toString());
+            if (params.containsKey("phoneNumber")) {
+                userInfo.setCellphone(params.get("phoneNumber").toString());
             }
         }
         authState.setAuthInfo(oAuthInfo);

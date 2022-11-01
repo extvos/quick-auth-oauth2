@@ -27,6 +27,8 @@ public interface OAuthProvider {
     String GENDER_KEY = "gender";
     String PHONE_NUMBER_KEY = "phoneNumber";
 
+    String EMAIL = "email";
+
 
     /**
      * A unique identifier for service provider
