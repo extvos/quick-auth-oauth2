@@ -362,7 +362,7 @@ public class OAuthController {
             if (null != quickAuthCallback) {
                 userInfo = quickAuthCallback.onLoggedIn(userInfo);
             }
-            OAuthInfo oAuthInfo = openidResolver.register(provider, authState.getOpenId(), userInfo.getUsername(), userInfo.getPassword(), null);
+            OAuthInfo oAuthInfo = openidResolver.register(provider, authState.getOpenId(), userInfo.getUsername(), userInfo.getPassword(), authState.getExtraInfo());
             Assert.notNull(oAuthInfo.getUserId(), ResultException.serviceUnavailable("create user failed"));
             authState.setAuthInfo(oAuthInfo);
             userInfo.setOpenId(oAuthInfo.getOpenId());
