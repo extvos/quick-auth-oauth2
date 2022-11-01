@@ -273,14 +273,15 @@ public class OAuthController {
                     QuickToken tk = new QuickToken(userInfo.getUsername(), userInfo.getPassword(), "", "");
                     try {
                         subject.login(tk);
+                        userInfo.setExtraInfo(authState.getExtraInfo());
                         userInfo = quickAuthService.fillUserInfo(userInfo);
                         if (null != quickAuthCallback) {
                             userInfo = quickAuthCallback.onLoggedIn(userInfo);
                         }
                         authState.setStatus(OAuthState.LOGGED_IN);
+                        authState.setExtraInfo(userInfo.getExtraInfo());
                         sess.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
                         userInfo.setProvider(provider);
-                        userInfo.setExtraInfo(authState.getExtraInfo());
                         userInfo.setOpenId(authState.getOpenId());
                         sess.setAttribute(UserInfo.USER_INFO_KEY, userInfo);
                     } catch (Exception e) {
@@ -358,6 +359,7 @@ public class OAuthController {
         try {
             subject.login(tk);
             userInfo = quickAuthService.getUserByName(username, false);
+            userInfo.setExtraInfo(authState.getExtraInfo());
             userInfo = quickAuthService.fillUserInfo(userInfo);
             if (null != quickAuthCallback) {
                 userInfo = quickAuthCallback.onLoggedIn(userInfo);
@@ -372,7 +374,6 @@ public class OAuthController {
             authState.setStatus(OAuthState.LOGGED_IN);
             session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
             userInfo.setProvider(provider);
-            userInfo.setExtraInfo(authState.getExtraInfo());
             userInfo.setOpenId(authState.getOpenId());
             session.setAttribute(UserInfo.USER_INFO_KEY, userInfo);
         } catch (Exception e) {
