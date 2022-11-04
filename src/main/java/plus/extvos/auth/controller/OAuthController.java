@@ -330,7 +330,6 @@ public class OAuthController {
                                       @RequestParam(value = "salt", required = false) String salt,
                                       @RequestParam(value = "algorithm", required = false) String algorithm,
                                       @RequestParam(value = "captcha", required = false) String captcha,
-                                      @RequestParam(value = "verifier", required = false) String verifier,
                                       @RequestBody(required = false) Map<String, String> params) throws ResultException {
         OAuthProvider oAuthProvider = getProvider(provider);
         Subject subject = SecurityUtils.getSubject();
@@ -340,13 +339,9 @@ public class OAuthController {
         Assert.notNull(authState, ResultException.forbidden("not in oauth session"));
         Assert.notEmpty(authState.getOpenId(), ResultException.forbidden("openId presented in oauth session"));
         Assert.equals(authState.getStatus(), OAuthState.NEED_REGISTER, ResultException.forbidden("not in NEED_REGISTER state"));
-        if (quickAuthConfig.isRegisterCaptchaRequired() || captcha != null) {
+        if (quickAuthConfig.isCaptchaRequired() || captcha != null) {
             Assert.notEmpty(captcha, new ResultException(AuthCode.CAPTCHA_REQUIRED, "Captcha required!"));
             SessionUtil.validateCaptcha(captcha, new ResultException(AuthCode.INCORRECT_CAPTCHA, "Incorrect captcha"));
-        }
-        if (quickAuthConfig.isRegisterVerifierRequired() || verifier != null) {
-            Assert.notEmpty(verifier, new ResultException(AuthCode.VERIFIER_REQUIRED, "Verifier required!"));
-            SessionUtil.validateVerifier(verifier, new ResultException(AuthCode.INCORRECT_VERIFIER, "Incorrect verifier"));
         }
         if (Validator.notEmpty(params)) {
             username = params.getOrDefault("username", username).toString();
