@@ -450,7 +450,7 @@ public class OAuthController {
         if (u != null) {
             throw ResultException.conflict("user with username '" + username + "' already exists");
         }
-        if(null != authState.getExtraInfo()) {
+        if (null != authState.getExtraInfo()) {
             params.putAll(authState.getExtraInfo());
         }
         Serializable userId = quickAuthService.createUserInfo(username, password, status, perms, roles, params);
@@ -550,8 +550,26 @@ public class OAuthController {
             }
         }
         if (null == authInfo) {  // Not getting user info, need to register...
-            authState.setStatus(OAuthState.NEED_REGISTER);
-            session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
+            if (null != currentUserId) { // Attach to existing user
+                try {
+                    authInfo = openidResolver.register(provider, openId, currentUsername, null, extraInfo);
+                    authState.setExtraInfo(authInfo.getExtraInfo());
+                    authState.setStatus(OAuthState.LOGGED_IN);
+                    session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
+                } catch (ResultException e) {
+                    authState.setStatus(OAuthState.FAILED);
+                    authState.setError(e.getMessage());
+                    session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
+                    if (external) {
+                        return buildAuthorizedResponse(oAuthProvider, response, OAuthState.FAILED, e.getMessage());
+                    } else {
+                        throw ResultException.forbidden(e.getMessage());
+                    }
+                }
+            } else {
+                authState.setStatus(OAuthState.NEED_REGISTER);
+                session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
+            }
             if (external) {
                 return buildAuthorizedResponse(oAuthProvider, response, authState.getStatus(), "");
             } else {
