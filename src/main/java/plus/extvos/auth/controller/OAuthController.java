@@ -450,6 +450,9 @@ public class OAuthController {
         if (u != null) {
             throw ResultException.conflict("user with username '" + username + "' already exists");
         }
+        if(null != authState.getExtraInfo()) {
+            params.putAll(authState.getExtraInfo());
+        }
         Serializable userId = quickAuthService.createUserInfo(username, password, status, perms, roles, params);
         Assert.notNull(userId, ResultException.serviceUnavailable("create user failed"));
         OAuthInfo oAuthInfo = openidResolver.register(provider, authState.getOpenId(), username, password, params);
