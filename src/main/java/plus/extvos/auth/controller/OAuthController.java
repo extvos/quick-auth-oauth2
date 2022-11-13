@@ -556,6 +556,14 @@ public class OAuthController {
                     authState.setExtraInfo(authInfo.getExtraInfo());
                     authState.setStatus(OAuthState.LOGGED_IN);
                     session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
+                    UserInfo userInfo = authState.getUserInfo();
+                    userInfo.setProvider(provider);
+                    userInfo.setOpenId(authInfo.getOpenId());
+                    userInfo.setExtraInfo(authInfo.getExtraInfo());
+                    authState.setUserInfo(userInfo);
+                    authState.setAuthInfo(authInfo);
+                    session.setAttribute(UserInfo.USER_INFO_KEY, userInfo);
+                    session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
                 } catch (ResultException e) {
                     authState.setStatus(OAuthState.FAILED);
                     authState.setError(e.getMessage());

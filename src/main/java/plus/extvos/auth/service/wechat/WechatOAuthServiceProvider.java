@@ -251,12 +251,15 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
      * @throws ResultException if errors
      */
     public TokenResult getAccessToken(String code) throws ResultException {
+        log.debug("getAccessToken:> code = {}", code);
         String accessTokenUrl = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=" + config.getAppId() + "&secret="
                 + config.getAppSecret() + "&code=" + code + "&grant_type=" + config.getGrantType();
+        log.debug("getAccessToken:> accessTokenUrl = {}", accessTokenUrl);
         HttpResponse resp = HttpRequest.get(accessTokenUrl).execute();
         if (resp.getStatus() != HttpStatus.HTTP_OK) {
             throw ResultException.serviceUnavailable("request to wechat failed");
         }
+        log.debug("getAccessToken:> response = {}", resp.body());
         Map<String, Object> map;
         ObjectMapper objectMapper = new ObjectMapper();
         try {
