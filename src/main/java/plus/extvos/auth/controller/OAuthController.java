@@ -557,9 +557,18 @@ public class OAuthController {
                     authState.setStatus(OAuthState.LOGGED_IN);
                     session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
                     UserInfo userInfo = authState.getUserInfo();
+                    userInfo = quickAuthService.fillUserInfo(userInfo);
                     userInfo.setProvider(provider);
                     userInfo.setOpenId(authInfo.getOpenId());
-                    userInfo.setExtraInfo(authInfo.getExtraInfo());
+                    Map<String, Object> m = userInfo.getExtraInfo();
+                    if (null != authInfo.getExtraInfo()) {
+                        if (null == m) {
+                            m = authInfo.getExtraInfo();
+                        } else {
+                            m.putAll(authInfo.getExtraInfo());
+                        }
+                    }
+                    userInfo.setExtraInfo(m);
                     authState.setUserInfo(userInfo);
                     authState.setAuthInfo(authInfo);
                     session.setAttribute(UserInfo.USER_INFO_KEY, userInfo);
