@@ -14,13 +14,9 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import plus.extvos.auth.config.QuickAuthConfig;
-import plus.extvos.auth.dto.OAuthInfo;
-import plus.extvos.auth.dto.OAuthResult;
-import plus.extvos.auth.dto.OAuthState;
-import plus.extvos.auth.dto.UserInfo;
+import plus.extvos.auth.dto.*;
 import plus.extvos.auth.enums.AuthCode;
 import plus.extvos.auth.service.*;
-import plus.extvos.auth.shiro.QuickToken;
 import plus.extvos.auth.utils.SessionUtil;
 import plus.extvos.common.Assert;
 import plus.extvos.common.Result;
@@ -72,6 +68,9 @@ public class OAuthController {
 
     @Autowired
     private ProviderService providerService;
+
+    @Autowired
+    private QuickAuthentication quickAuthentication;
 
     @Value("${quick.auth.base-url:http://localhost}")
     private String baseUrl;
@@ -254,12 +253,12 @@ public class OAuthController {
             return Result.data(authState.asResult()).success();
 //            throw ResultException.notFound("state not exists");
         }
-        if (subject.isAuthenticated()) {
+        if (subject.isAuthenticated() && quickAuthentication.userInfo() != null) {
             log.debug("getAuthorizedStatus:> subject.isAuthenticated");
             if (authState.getStatus() >= OAuthState.ID_PRESENTED && authState.getStatus() != OAuthState.LOGGED_IN) {
                 UserInfo userInfo = authState.getUserInfo();
                 if (null == userInfo) {
-                    userInfo = quickAuthService.getUserByName(subject.getPrincipal().toString(), true);
+                    userInfo = quickAuthentication.userInfo();
                     authState.setUserInfo(userInfo);
                 }
                 authState.setStatus(OAuthState.LOGGED_IN);
@@ -270,24 +269,18 @@ public class OAuthController {
                 log.debug("getAuthorizedStatus:> authState.getStatus() = {}", authState.getStatus());
                 UserInfo userInfo = authState.getUserInfo();
                 if (userInfo != null) {
-                    QuickToken tk = new QuickToken(userInfo.getUsername(), userInfo.getPassword(), "", "");
-                    try {
-                        subject.login(tk);
-                        userInfo.setExtraInfo(authState.getExtraInfo());
-                        userInfo = quickAuthService.fillUserInfo(userInfo);
-                        if (null != quickAuthCallback) {
-                            userInfo = quickAuthCallback.onLoggedIn(userInfo);
-                        }
+                    LoginResult result = quickAuthentication.loginImplicitly(userInfo, false);
+                    if (null == result.getUserInfo()) {
+                        throw ResultException.conflict("try to login failed");
+                    } else {
+                        userInfo = result.getUserInfo();
+                        userInfo.setProvider(provider);
+                        userInfo.setOpenId(authState.getOpenId());
+                        userInfo.updateExtraInfo(authState.getExtraInfo());
                         authState.setStatus(OAuthState.LOGGED_IN);
                         authState.setExtraInfo(userInfo.getExtraInfo());
                         sess.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
-                        userInfo.setProvider(provider);
-                        userInfo.setOpenId(authState.getOpenId());
-                        sess.setAttribute(UserInfo.USER_INFO_KEY, userInfo);
-                    } catch (Exception e) {
-                        log.error("getAuthorizedStatus:> try to login failed by {} ", userInfo.getUsername(), e);
-                        tk.clear();
-                        throw ResultException.conflict("try to login failed");
+                        quickAuthentication.updateUserInfo(userInfo);
                     }
                 }
             }
@@ -326,58 +319,68 @@ public class OAuthController {
     @PostMapping(value = "/{provider}/login")
     public Result<UserInfo> loginUser(@PathVariable("provider") String provider,
                                       @RequestParam(value = "username", required = false) String username,
+                                      @RequestParam(value = "email", required = false) String email,
+                                      @RequestParam(value = "cellphone", required = false) String cellphone,
+                                      @RequestParam(value = "verifier", required = false) String verifier,
                                       @RequestParam(value = "password", required = false) String password,
                                       @RequestParam(value = "salt", required = false) String salt,
                                       @RequestParam(value = "algorithm", required = false) String algorithm,
                                       @RequestParam(value = "captcha", required = false) String captcha,
                                       @RequestBody(required = false) Map<String, String> params) throws ResultException {
-        OAuthProvider oAuthProvider = getProvider(provider);
-        Subject subject = SecurityUtils.getSubject();
-        Session session = subject.getSession();
+        if (Validator.notEmpty(params)) {
+            username = params.getOrDefault("username", username).toString();
+            email = params.getOrDefault("email", email);
+            cellphone = params.getOrDefault("cellphone", cellphone);
+            verifier = params.getOrDefault("verifier", verifier);
+            password = params.getOrDefault("password", password).toString();
+            captcha = params.getOrDefault("captcha", captcha).toString();
+            salt = params.getOrDefault("salt", salt == null ? "" : salt).toString();
+            algorithm = params.getOrDefault("algorithm", algorithm == null ? "" : algorithm).toString();
+        }
+        log.debug("loginUser:> {},{},{},{},{}", username, password, algorithm, salt, captcha);
+//        OAuthProvider oAuthProvider = getProvider(provider);
+        quickAuthentication.validateCaptcha(captcha, quickAuthConfig.isCaptchaRequired());
+        LoginResult loginResult;
+        if (Validator.notEmpty(username)) {
+            loginResult = quickAuthentication.loginByUsername(username, password, algorithm, salt, false);
+        } else if (Validator.notEmpty(email)) {
+            if (Validator.notEmpty(verifier)) {
+                loginResult = quickAuthentication.loginByEmail(email, verifier, false);
+            } else {
+                loginResult = quickAuthentication.loginByEmail(email, password, algorithm, salt, false);
+            }
+
+        } else if (Validator.notEmpty(cellphone)) {
+            if (Validator.notEmpty(verifier)) {
+                loginResult = quickAuthentication.loginByCellphone(cellphone, verifier, false);
+            } else {
+                loginResult = quickAuthentication.loginByCellphone(cellphone, password, algorithm, salt, false);
+            }
+
+        } else {
+            throw ResultException.badRequest("username of email or cellphone required");
+        }
+        UserInfo userInfo = loginResult.getUserInfo();
+        if (null == userInfo) {
+            throw ResultException.forbidden("login failed ???");
+        }
+        Session session = SecurityUtils.getSubject().getSession();
         Assert.notNull(session, ResultException.forbidden("not in session"));
         OAuthState authState = (OAuthState) session.getAttribute(OAuthState.OAUTH_STATE_KEY);
         Assert.notNull(authState, ResultException.forbidden("not in oauth session"));
         Assert.notEmpty(authState.getOpenId(), ResultException.forbidden("openId presented in oauth session"));
         Assert.equals(authState.getStatus(), OAuthState.NEED_REGISTER, ResultException.forbidden("not in NEED_REGISTER state"));
-        if (quickAuthConfig.isCaptchaRequired() || captcha != null) {
-            Assert.notEmpty(captcha, new ResultException(AuthCode.CAPTCHA_REQUIRED, "Captcha required!"));
-            SessionUtil.validateCaptcha(captcha, new ResultException(AuthCode.INCORRECT_CAPTCHA, "Incorrect captcha"));
-        }
-        if (Validator.notEmpty(params)) {
-            username = params.getOrDefault("username", username).toString();
-            password = params.getOrDefault("password", password).toString();
-            salt = params.getOrDefault("salt", salt == null ? "" : salt).toString();
-            algorithm = params.getOrDefault("algorithm", algorithm == null ? "" : algorithm).toString();
-        }
-        UserInfo userInfo;
-        QuickToken tk = new QuickToken(username, password, algorithm, salt);
-        try {
-            subject.login(tk);
-            userInfo = quickAuthService.getUserByName(username, false);
-            userInfo.setExtraInfo(authState.getExtraInfo());
-            userInfo = quickAuthService.fillUserInfo(userInfo);
-            if (null != quickAuthCallback) {
-                userInfo = quickAuthCallback.onLoggedIn(userInfo);
-            }
-            OAuthInfo oAuthInfo = openidResolver.register(provider, authState.getOpenId(), userInfo.getUsername(), userInfo.getPassword(), authState.getExtraInfo());
-            Assert.notNull(oAuthInfo, ResultException.serviceUnavailable("create user failed"));
-            Assert.notNull(oAuthInfo.getUserId(), ResultException.serviceUnavailable("create user failed"));
-            authState.setAuthInfo(oAuthInfo);
-            userInfo.setOpenId(oAuthInfo.getOpenId());
-            userInfo.setProvider(provider);
-            authState.setUserInfo(userInfo);
-            authState.setStatus(OAuthState.LOGGED_IN);
-            session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
-            userInfo.setProvider(provider);
-            userInfo.setOpenId(authState.getOpenId());
-            session.setAttribute(UserInfo.USER_INFO_KEY, userInfo);
-        } catch (Exception e) {
-            log.error("getAuthorizedStatus:> try to login failed by {} ", username, e);
-            tk.clear();
-            session.removeAttribute(UserInfo.USER_INFO_KEY);
-            session.removeAttribute(OAuthState.OAUTH_STATE_KEY);
-            throw ResultException.forbidden("try to login failed");
-        }
+        OAuthInfo oAuthInfo = openidResolver.register(provider, authState.getOpenId(), userInfo.getUsername(), userInfo.getPassword(), authState.getExtraInfo());
+        Assert.notNull(oAuthInfo, ResultException.serviceUnavailable("create user failed"));
+        Assert.notNull(oAuthInfo.getUserId(), ResultException.serviceUnavailable("create user failed"));
+        authState.setAuthInfo(oAuthInfo);
+        userInfo.setOpenId(oAuthInfo.getOpenId());
+        userInfo.setProvider(provider);
+        userInfo.updateExtraInfo(authState.getExtraInfo());
+        authState.setUserInfo(userInfo);
+        authState.setStatus(OAuthState.LOGGED_IN);
+        session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
+        quickAuthentication.updateUserInfo(userInfo);
         return Result.data(userInfo).success();
     }
 
@@ -560,20 +563,13 @@ public class OAuthController {
                     userInfo = quickAuthService.fillUserInfo(userInfo);
                     userInfo.setProvider(provider);
                     userInfo.setOpenId(authInfo.getOpenId());
-                    Map<String, Object> m = userInfo.getExtraInfo();
-                    if (null != authInfo.getExtraInfo()) {
-                        if (null == m) {
-                            m = authInfo.getExtraInfo();
-                        } else {
-                            m.putAll(authInfo.getExtraInfo());
-                        }
-                    }
-                    userInfo.setExtraInfo(m);
+                    userInfo.updateExtraInfo(authInfo.getExtraInfo());
                     authState.setUserInfo(userInfo);
                     authState.setAuthInfo(authInfo);
                     session.setAttribute(UserInfo.USER_INFO_KEY, userInfo);
                     session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
                 } catch (ResultException e) {
+                    log.warn("authorized:> ", e);
                     authState.setStatus(OAuthState.FAILED);
                     authState.setError(e.getMessage());
                     session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
@@ -615,32 +611,18 @@ public class OAuthController {
         // Do the login if state in current session.
         if (authState.getSessionId().equals(subject.getSession().getId().toString())) {
             log.debug("authorized:> trying to login account {} / {}  / {} ...", userInfo.getUsername(), authState.getOpenId(), userInfo.getPassword());
-            QuickToken tk = new QuickToken(userInfo.getUsername(), userInfo.getPassword(), "", "");
-            try {
-                subject.login(tk);
-                userInfo = quickAuthService.fillUserInfo(userInfo);
-                if (null != quickAuthCallback) {
-                    userInfo = quickAuthCallback.onLoggedIn(userInfo);
-                }
-                authState.setStatus(OAuthState.LOGGED_IN);
-                authState.setExtraInfo(authInfo.getExtraInfo());
-                session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
-                userInfo.setProvider(provider);
-                userInfo.setExtraInfo(extraInfo);
-                userInfo.setOpenId(authState.getOpenId());
-                session.setAttribute(UserInfo.USER_INFO_KEY, userInfo);
-                return Result.data(authState.asResult()).success();
-            } catch (Exception e) {
-                log.error("getAuthorizedStatus:> try to login failed by {} ", userInfo.getUsername(), e);
-                tk.clear();
-                authState.setStatus(OAuthState.FAILED);
-                authState.setError(e.getMessage());
-                session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
+            LoginResult loginResult = quickAuthentication.loginImplicitly(userInfo, false);
+            if (null == loginResult.getUserInfo()) {
                 if (external) {
                     return buildAuthorizedResponse(oAuthProvider, response, OAuthState.FAILED, "try to login failed");
                 } else {
                     throw ResultException.conflict("try to login failed");
                 }
+            } else {
+                authState.setStatus(OAuthState.LOGGED_IN);
+                authState.setExtraInfo(authInfo.getExtraInfo());
+                session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
+                return Result.data(authState.asResult()).success();
             }
         }
         if (external) {
@@ -762,22 +744,8 @@ public class OAuthController {
 
         // trying to login
         log.debug("registerSession:> try to logging user '{}' ... ", userInfo.getUsername());
-        QuickToken tk = new QuickToken(userInfo.getUsername(), userInfo.getPassword(), "", "");
-        try {
-            subject.login(tk);
-            authState.setStatus(OAuthState.LOGGED_IN);
-            userInfo = quickAuthService.fillUserInfo(userInfo);
-            if (null != quickAuthCallback) {
-                userInfo = quickAuthCallback.onLoggedIn(userInfo);
-            }
-            session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
-            userInfo.setProvider(provider);
-            userInfo.setExtraInfo(extraInfo);
-            userInfo.setOpenId(authState.getOpenId());
-            session.setAttribute(UserInfo.USER_INFO_KEY, userInfo);
-        } catch (Exception e) {
-            log.error("getAuthorizedStatus:> try to login failed by {} ", userInfo.getUsername(), e);
-            tk.clear();
+        LoginResult loginResult = quickAuthentication.loginImplicitly(userInfo, false);
+        if (null == loginResult.getUserInfo()) {
             throw ResultException.conflict("try to login failed");
         }
 
