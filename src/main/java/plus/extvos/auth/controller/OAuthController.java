@@ -3,6 +3,7 @@ package plus.extvos.auth.controller;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.ShiroException;
 import org.apache.shiro.session.Session;
 import org.apache.shiro.session.mgt.DefaultSessionKey;
 import org.apache.shiro.subject.Subject;
@@ -165,13 +166,18 @@ public class OAuthController {
         Subject subject = SecurityUtils.getSubject();
         String gotoUri = failureUri;
         Session session;
-        boolean external = false;
+//        boolean external = false;
         if (state == null || state.isEmpty()) {
             session = subject.getSession(true);
             state = session.getId().toString();
         } else {
-            external = true;
-            session = SecurityUtils.getSecurityManager().getSession(new DefaultSessionKey(state));
+//            external = true;
+            try {
+                session = SecurityUtils.getSecurityManager().getSession(new DefaultSessionKey(state));
+            } catch (ShiroException e) {
+                buildAuthorizedResponse(oAuthProvider, response, -1, e.getMessage());
+                return null;
+            }
         }
         OAuthState stateObj = (OAuthState) session.getAttribute(OAuthState.OAUTH_STATE_KEY);
         if (null == stateObj) {
@@ -187,7 +193,7 @@ public class OAuthController {
         session.setAttribute(OAuthState.OAUTH_STATE_KEY, stateObj);
         gotoUri = getProviderLoginUri(oAuthProvider, redirectUri, state);
         String confirmPage = oAuthProvider.confirmPage("确认", quickAuthConfig.getSiteName(), gotoUri);
-        if(confirmPage != null && !confirmPage.isEmpty()) {
+        if (confirmPage != null && !confirmPage.isEmpty()) {
             response.setDateHeader("Expires", 0);
             response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
             response.addHeader("Cache-Control", "post-check=0, pre-check=0");
