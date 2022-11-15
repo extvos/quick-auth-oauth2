@@ -77,11 +77,14 @@ public interface OAuthProvider {
 
     /**
      * Generate a default result page when redirectUri not specified.
-     * @param ret authState
+     *
+     * @param ret     authState
      * @param message error message
      * @return out put as String
      */
     String resultPage(int ret, String message);
+
+    String confirmPage(String title, String siteName, String gotoUrl);
 
 
 //    /**

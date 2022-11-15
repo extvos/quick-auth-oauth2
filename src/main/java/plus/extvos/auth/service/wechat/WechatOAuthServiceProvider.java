@@ -16,6 +16,7 @@ import plus.extvos.auth.service.OAuthProvider;
 import plus.extvos.common.utils.QuickHash;
 import plus.extvos.common.Assert;
 import plus.extvos.common.exception.ResultException;
+import plus.extvos.common.utils.ThymeleafTemplateUtil;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
@@ -172,6 +173,7 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
         String tips = "";
         String icon = "weui_icon_warn";
         String error = "";
+        Map<String, Object> params = new HashMap<>();
 
         if (ret >= OAuthState.LOGGED_IN) {
             title = "完 成";
@@ -191,49 +193,67 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
             icon = "weui_icon_info";
         }
 
-        sb.append("<html>");
-        sb.append("<head>");
-        sb.append("<title> " + title + " </title>");
-        sb.append("<meta charset=\"utf-8\">");
-        sb.append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=0\">");
-        sb.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"https://res.wx.qq.com/open/libs/weui/0.4.1/weui.css\">");
-        sb.append("<script>");
-        sb.append("var bridge = null;");
-        sb.append("  function closeWin() {\n" +
-                "       if (bridge) { bridge.call(\"closeWindow\"); }" +
-                "     }");
-        sb.append("  function onBridgeReady() {\n" +
-                "        console.log('WeixinJSBridge',WeixinJSBridge);\n" +
-                "        bridge = WeixinJSBridge;\n" +
-                "    }\n" +
-                "        if (typeof WeixinJSBridge === \"undefined\") {\n" +
-                "            if (document.addEventListener) {\n" +
-                "                document.addEventListener('WeixinJSBridgeReady', onBridgeReady, false);\n" +
-                "            } else if (document.attachEvent) {\n" +
-                "                document.attachEvent('WeixinJSBridgeReady', onBridgeReady);\n" +
-                "                document.attachEvent('onWeixinJSBridgeReady', onBridgeReady);\n" +
-                "            }\n" +
-                "        } else {\n" +
-                "            onBridgeReady();\n" +
-                "    }");
-        sb.append("</script>");
-        sb.append("<body>");
-        sb.append("<div class=\"weui_msg\">");
-        sb.append("<div class=\"weui_icon_area\">");
-        sb.append("<i class=\"" + icon + " weui_icon_msg\"></i>");
-        sb.append("</div>");
-        sb.append("<div class=\"weui_text_area\">");
-        if (null != message && !message.isEmpty()) {
-            sb.append("<h4 class=\"weui_msg_title\">" + message + "</h4>");
-        } else {
-            sb.append("<h4 class=\"weui_msg_title\">" + tips + "</h4>");
-        }
-        sb.append("<a href=\"javascript:closeWin();\" class=\"weui_btn weui_btn_primary\">关闭</a>");
-        sb.append("</div>");
-        sb.append("</div>");
-        sb.append("</body>");
-        sb.append("</html>");
-        return sb.toString();
+        params.put("title", title);
+        params.put("tips", tips);
+        params.put("icon", icon);
+        params.put("error", error);
+        params.put("message", message);
+        params.put("result", ret);
+
+        return ThymeleafTemplateUtil.resource("templates/wechat/result.html").render(params);
+//
+//        sb.append("<html>");
+//        sb.append("<head>");
+//        sb.append("<title> " + title + " </title>");
+//        sb.append("<meta charset=\"utf-8\">");
+//        sb.append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, user-scalable=0\">");
+//        sb.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"https://res.wx.qq.com/open/libs/weui/0.4.1/weui.css\">");
+//        sb.append("<script>");
+//        sb.append("var bridge = null;");
+//        sb.append("  function closeWin() {\n" +
+//                "       if (bridge) { bridge.call(\"closeWindow\"); }" +
+//                "     }");
+//        sb.append("  function onBridgeReady() {\n" +
+//                "        console.log('WeixinJSBridge',WeixinJSBridge);\n" +
+//                "        bridge = WeixinJSBridge;\n" +
+//                "    }\n" +
+//                "        if (typeof WeixinJSBridge === \"undefined\") {\n" +
+//                "            if (document.addEventListener) {\n" +
+//                "                document.addEventListener('WeixinJSBridgeReady', onBridgeReady, false);\n" +
+//                "            } else if (document.attachEvent) {\n" +
+//                "                document.attachEvent('WeixinJSBridgeReady', onBridgeReady);\n" +
+//                "                document.attachEvent('onWeixinJSBridgeReady', onBridgeReady);\n" +
+//                "            }\n" +
+//                "        } else {\n" +
+//                "            onBridgeReady();\n" +
+//                "    }");
+//        sb.append("</script>");
+//        sb.append("<body>");
+//        sb.append("<div class=\"weui_msg\">");
+//        sb.append("<div class=\"weui_icon_area\">");
+//        sb.append("<i class=\"" + icon + " weui_icon_msg\"></i>");
+//        sb.append("</div>");
+//        sb.append("<div class=\"weui_text_area\">");
+//        if (null != message && !message.isEmpty()) {
+//            sb.append("<h4 class=\"weui_msg_title\">" + message + "</h4>");
+//        } else {
+//            sb.append("<h4 class=\"weui_msg_title\">" + tips + "</h4>");
+//        }
+//        sb.append("<a href=\"javascript:closeWin();\" class=\"weui_btn weui_btn_primary\">关闭</a>");
+//        sb.append("</div>");
+//        sb.append("</div>");
+//        sb.append("</body>");
+//        sb.append("</html>");
+//        return sb.toString();
+    }
+
+    @Override
+    public String confirmPage(String title, String siteName, String gotoUrl) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("title", title);
+        params.put("siteName", siteName);
+        params.put("gotoUrl", gotoUrl);
+        return ThymeleafTemplateUtil.resource("templates/wechat/confirm.html").render(params);
     }
 
     /**

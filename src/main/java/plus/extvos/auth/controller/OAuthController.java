@@ -165,10 +165,12 @@ public class OAuthController {
         Subject subject = SecurityUtils.getSubject();
         String gotoUri = failureUri;
         Session session;
+        boolean external = false;
         if (state == null || state.isEmpty()) {
             session = subject.getSession(true);
             state = session.getId().toString();
         } else {
+            external = true;
             session = SecurityUtils.getSecurityManager().getSession(new DefaultSessionKey(state));
         }
         OAuthState stateObj = (OAuthState) session.getAttribute(OAuthState.OAUTH_STATE_KEY);
@@ -184,6 +186,22 @@ public class OAuthController {
         stateObj.setStatus(OAuthState.REDIRECTED);
         session.setAttribute(OAuthState.OAUTH_STATE_KEY, stateObj);
         gotoUri = getProviderLoginUri(oAuthProvider, redirectUri, state);
+        String confirmPage = oAuthProvider.confirmPage("确认", quickAuthConfig.getSiteName(), gotoUri);
+        if(confirmPage != null && !confirmPage.isEmpty()) {
+            response.setDateHeader("Expires", 0);
+            response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+            response.addHeader("Cache-Control", "post-check=0, pre-check=0");
+            response.setHeader("Pragma", "no-cache");
+            response.setContentType("text/html; charset=UTF-8");
+            PrintWriter writer = null;
+            try {
+                writer = response.getWriter();
+                writer.write(confirmPage);
+                return null;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
         try {
             log.debug("goRedirect:> Redirecting to: {}", gotoUri);
             response.sendRedirect(gotoUri);
@@ -205,10 +223,10 @@ public class OAuthController {
     @ApiOperation(value = "第三方登录跳转QRCODE", notes = "获取图片QRCODE，直接输出图片", position = 3)
     @RequestMapping(produces = MediaType.IMAGE_PNG_VALUE,
             value = "/{provider}/code-img", method = RequestMethod.GET)
-    protected ModelAndView getCodeUrl(@PathVariable("provider") String provider,
-                                      @RequestParam(value = "redirectUri", required = false) String redirectUri,
-                                      @RequestParam(required = false) Integer size,
-                                      HttpServletResponse response) throws ResultException, IOException {
+    protected ModelAndView getCodeUrlImage(@PathVariable("provider") String provider,
+                                           @RequestParam(value = "redirectUri", required = false) String redirectUri,
+                                           @RequestParam(required = false) Integer size,
+                                           HttpServletResponse response) throws ResultException, IOException {
         OAuthProvider oAuthProvider = getProvider(provider);
         String url = buildLoginUrl(oAuthProvider, redirectUri);
         log.debug("getCodeUrl: {}", url);
@@ -512,6 +530,20 @@ public class OAuthController {
         if (authState == null || Validator.isEmpty(authState.getSessionId())) {
             log.debug("authorized:> state of '{}' not exists, make a new one...", state);
             authState = new OAuthState(state);
+        }
+        if (authState.getStatus() < OAuthState.INITIALIZED) {
+            if (external) {
+                return buildAuthorizedResponse(oAuthProvider, response, authState.getStatus(), authState.getError());
+            } else {
+                return Result.data(authState.asResult()).success();
+            }
+        }
+        if (authState.getStatus() > OAuthState.INFO_PRESENTED) {
+            if (external) {
+                return buildAuthorizedResponse(oAuthProvider, response, authState.getStatus(), "");
+            } else {
+                return Result.data(authState.asResult()).success();
+            }
         }
         try {
             authState = oAuthProvider.authorized(code, state, via, authState);

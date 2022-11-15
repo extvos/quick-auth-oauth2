@@ -1,0 +1,69 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${title}"></title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
+    <link rel="stylesheet" type="text/css" href="https://res.wx.qq.com/open/libs/weui/0.4.1/weui.css">
+    <script th:inline="javascript">
+        let bridge = null;
+        const result = [[${result}]];
+        function closeWin() {
+            if (bridge) {
+                bridge.call("closeWindow")
+            }
+        }
+
+        function onBridgeReady() {
+            console.log('WeixinJSBridge', WeixinJSBridge);
+            bridge = WeixinJSBridge;
+            if(result>=0 && result < 6) {
+                setTimeout(()=> {
+                    window.location.reload();
+                }, 2000);
+            }else if(result >= 6) {
+                setTimeout(()=> {
+                    closeWin();
+                }, 3000);
+            }
+        }
+
+        if (typeof WeixinJSBridge === "undefined") {
+            if (document.addEventListener) {
+                document.addEventListener('WeixinJSBridgeReady', onBridgeReady, false);
+            } else if (document.attachEvent) {
+                document.attachEvent('WeixinJSBridgeReady', onBridgeReady);
+                document.attachEvent('onWeixinJSBridgeReady', onBridgeReady);
+            }
+        } else {
+            onBridgeReady();
+        }
+    </script>
+<body>
+<div class="weui_msg">
+    <div th:switch="${result}" class="weui_icon_area">
+        <i th:case="-1" class="weui_icon_warn weui_icon_msg"></i>
+        <i th:case="0" class="weui_icon_info weui_icon_msg"></i>
+        <i th:case="1" class="weui_icon_info weui_icon_msg"></i>
+        <i th:case="2" class="weui_icon_info weui_icon_msg"></i>
+        <i th:case="3" class="weui_icon_info weui_icon_msg"></i>
+        <i th:case="4" class="weui_icon_info weui_icon_msg"></i>
+        <i th:case="5" class="weui_icon_info weui_icon_msg"></i>
+        <i th:case="6" class="weui_icon_success weui_icon_msg"></i>
+        <i th:case="*" class="weui_icon_warn weui_icon_msg"></i>
+    </div>
+    <div th:switch="${result}" class="weui_text_area">
+        <h4 th:case="-1" class="weui_msg_title">微信扫码失败，失败原因： <span th:text="${error}" /></h4>
+        <h4 th:case="0" class="weui_msg_title">进行中，请稍候...</h4>
+        <h4 th:case="1" class="weui_msg_title">进行中，请稍候...</h4>
+        <h4 th:case="2" class="weui_msg_title">进行中，请稍候...</h4>
+        <h4 th:case="3" class="weui_msg_title">进行中，请稍候...</h4>
+        <h4 th:case="4" class="weui_msg_title">进行中，请稍候...</h4>
+        <h4 th:case="5" class="weui_msg_title">您尚未注册用户，请根据页面提示完成注册绑定操作。</h4>
+        <h4 th:case="6" class="weui_msg_title">您已完成扫码登录，页面将在3秒后自动关闭</h4>
+        <h4 th:case="*" class="weui_msg_title">微信扫码失败，失败原因： <span th:text="${error}" /></h4>
+        <br />
+        <a href="javascript:closeWin();" class="weui_btn weui_btn_primary"> 关闭 </a>
+    </div>
+</div>
+</body>
+</html>

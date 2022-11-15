@@ -60,11 +60,11 @@ public class StandardOAuthServiceProvider implements OAuthProvider {
         String s = null;
         try {
             s = config.getEndpoint() +
-                "?clientId=" + config.getClientId() +
-                "&response_type=code" +
-                "&redirect_uri=" + URLEncoder.encode(redirectUri, "UTF-8") +
-                "&state=" + state +
-                "&scope=" + config.getScope();
+                    "?clientId=" + config.getClientId() +
+                    "&response_type=code" +
+                    "&redirect_uri=" + URLEncoder.encode(redirectUri, "UTF-8") +
+                    "&state=" + state +
+                    "&scope=" + config.getScope();
         } catch (UnsupportedEncodingException e) {
             throw ResultException.internalServerError("url encode failed");
         }
@@ -74,6 +74,11 @@ public class StandardOAuthServiceProvider implements OAuthProvider {
     @Override
     public String resultPage(int ret, String message) {
         return "";
+    }
+
+    @Override
+    public String confirmPage(String title, String siteName, String gotoUrl) {
+        return null;
     }
 
     @Override
