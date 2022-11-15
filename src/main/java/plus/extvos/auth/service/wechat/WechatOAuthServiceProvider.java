@@ -167,38 +167,26 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
     }
 
     @Override
-    public String resultPage(int ret, String message) {
+    public String resultPage(int ret, String message, String siteName) {
         StringBuffer sb = new StringBuffer();
         String title = "";
-        String tips = "";
-        String icon = "weui_icon_warn";
-        String error = "";
         Map<String, Object> params = new HashMap<>();
 
         if (ret >= OAuthState.LOGGED_IN) {
             title = "完 成";
-            tips = "您已完成扫码登录";
-            icon = "weui_icon_success";
         } else if (ret < OAuthState.INITIALIZED) {
             title = "错 误";
-            error = message;
-            icon = "weui_icon_warn";
         } else if (ret == OAuthState.NEED_REGISTER) {
             title = "提 醒";
-            tips = "您尚未注册用户，请根据页面提示完成注册绑定操作";
-            icon = "weui_icon_info";
         } else {
             title = "提 醒";
-            tips = "进行中，请稍候...";
-            icon = "weui_icon_info";
         }
 
         params.put("title", title);
-        params.put("tips", tips);
-        params.put("icon", icon);
-        params.put("error", error);
+        params.put("error", message);
         params.put("message", message);
         params.put("result", ret);
+        params.put("siteName", siteName);
 
         return ThymeleafTemplateUtil.resource("templates/wechat/result.html").render(params);
 //

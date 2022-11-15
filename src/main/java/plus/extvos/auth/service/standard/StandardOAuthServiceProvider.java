@@ -72,7 +72,7 @@ public class StandardOAuthServiceProvider implements OAuthProvider {
     }
 
     @Override
-    public String resultPage(int ret, String message) {
+    public String resultPage(int ret, String message, String siteName) {
         return "";
     }
 

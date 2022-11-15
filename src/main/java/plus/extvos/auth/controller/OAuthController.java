@@ -324,7 +324,7 @@ public class OAuthController {
             } else {
                 log.debug("buildAuthorizedResponse:> Generating output ...");
                 PrintWriter writer = response.getWriter();
-                writer.write(provider.resultPage(ret, err));
+                writer.write(provider.resultPage(ret, err, quickAuthConfig.getSiteName()));
                 writer.close();
             }
         } catch (IOException e) {

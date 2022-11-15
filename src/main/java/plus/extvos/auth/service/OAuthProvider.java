@@ -82,7 +82,7 @@ public interface OAuthProvider {
      * @param message error message
      * @return out put as String
      */
-    String resultPage(int ret, String message);
+    String resultPage(int ret, String message, String siteName);
 
     String confirmPage(String title, String siteName, String gotoUrl);
 

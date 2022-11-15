@@ -42,11 +42,11 @@
 <div class="weui_msg">
     <div th:switch="${result}" class="weui_icon_area">
         <i th:case="-1" class="weui_icon_warn weui_icon_msg"></i>
-        <i th:case="0" class="weui_icon_info weui_icon_msg"></i>
-        <i th:case="1" class="weui_icon_info weui_icon_msg"></i>
-        <i th:case="2" class="weui_icon_info weui_icon_msg"></i>
-        <i th:case="3" class="weui_icon_info weui_icon_msg"></i>
-        <i th:case="4" class="weui_icon_info weui_icon_msg"></i>
+        <i th:case="0" class="weui_icon_waiting weui_icon_msg"></i>
+        <i th:case="1" class="weui_icon_waiting weui_icon_msg"></i>
+        <i th:case="2" class="weui_icon_waiting weui_icon_msg"></i>
+        <i th:case="3" class="weui_icon_waiting weui_icon_msg"></i>
+        <i th:case="4" class="weui_icon_waiting weui_icon_msg"></i>
         <i th:case="5" class="weui_icon_info weui_icon_msg"></i>
         <i th:case="6" class="weui_icon_success weui_icon_msg"></i>
         <i th:case="*" class="weui_icon_warn weui_icon_msg"></i>
@@ -63,6 +63,9 @@
         <h4 th:case="*" class="weui_msg_title">微信扫码失败，失败原因： <span th:text="${error}" /></h4>
         <br />
         <a href="javascript:closeWin();" class="weui_btn weui_btn_primary"> 关闭 </a>
+    </div>
+    <div class="weui-footer weui-footer_fixed-bottom">
+        <p class="weui-footer__text">Copyright © <span th:text="${siteName}"/></p>
     </div>
 </div>
 </body>
