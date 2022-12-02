@@ -352,14 +352,14 @@ public class OAuthController {
                                       @RequestParam(value = "captcha", required = false) String captcha,
                                       @RequestBody(required = false) Map<String, String> params) throws ResultException {
         if (Validator.notEmpty(params)) {
-            username = params.getOrDefault("username", username).toString();
+            username = params.getOrDefault("username", username);
             email = params.getOrDefault("email", email);
             cellphone = params.getOrDefault("cellphone", cellphone);
             verifier = params.getOrDefault("verifier", verifier);
-            password = params.getOrDefault("password", password).toString();
-            captcha = params.getOrDefault("captcha", captcha).toString();
-            salt = params.getOrDefault("salt", salt == null ? "" : salt).toString();
-            algorithm = params.getOrDefault("algorithm", algorithm == null ? "" : algorithm).toString();
+            password = params.getOrDefault("password", password);
+            captcha = params.getOrDefault("captcha", captcha);
+            salt = params.getOrDefault("salt", salt == null ? "" : salt);
+            algorithm = params.getOrDefault("algorithm", algorithm == null ? "" : algorithm);
         }
         log.debug("loginUser:> {},{},{},{},{}", username, password, algorithm, salt, captcha);
 //        OAuthProvider oAuthProvider = getProvider(provider);
