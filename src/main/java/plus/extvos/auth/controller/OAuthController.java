@@ -23,16 +23,14 @@ import plus.extvos.common.Assert;
 import plus.extvos.common.Result;
 import plus.extvos.common.Validator;
 import plus.extvos.common.exception.ResultException;
+import plus.extvos.common.io.Resources;
 import plus.extvos.common.utils.QrCode;
 import plus.extvos.common.utils.QuickHash;
 import plus.extvos.common.utils.SpringContextHolder;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.URLEncoder;
 import java.util.*;
 
@@ -248,7 +246,18 @@ public class OAuthController {
 
         try {
             ServletOutputStream out = response.getOutputStream();
-            QrCode.size(size).format("png").content(url).write(out);
+            if (quickAuthConfig.getLogoImage() != null && !quickAuthConfig.getLogoImage().isEmpty()) {
+                File logo;
+                if (quickAuthConfig.getLogoImage().startsWith("classpath:")) {
+                    logo = Resources.getResourceAsFile(quickAuthConfig.getLogoImage().substring("classpath:".length()));
+                } else {
+                    logo = new File(quickAuthConfig.getLogoImage());
+                }
+                QrCode.size(size).logo(logo).format("png").content(url).write(out);
+            } else {
+                QrCode.size(size).format("png").content(url).write(out);
+            }
+
             try {
                 out.flush();
             } finally {
