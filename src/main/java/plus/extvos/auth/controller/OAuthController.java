@@ -21,6 +21,7 @@ import plus.extvos.auth.service.*;
 import plus.extvos.auth.utils.SessionUtil;
 import plus.extvos.common.Assert;
 import plus.extvos.common.Result;
+import plus.extvos.common.ResultCode;
 import plus.extvos.common.Validator;
 import plus.extvos.common.exception.ResultException;
 import plus.extvos.common.io.Resources;
@@ -392,6 +393,9 @@ public class OAuthController {
 
         } else {
             throw ResultException.badRequest("username of email or cellphone required");
+        }
+        if (loginResult.getResult() != ResultCode.OK) {
+            throw ResultException.make(loginResult.getResult(), loginResult.getError());
         }
         UserInfo userInfo = loginResult.getUserInfo();
         if (null == userInfo) {
