@@ -13,9 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import plus.extvos.auth.dto.OAuthState;
 import plus.extvos.auth.service.OAuthProvider;
-import plus.extvos.common.utils.QuickHash;
 import plus.extvos.common.Assert;
 import plus.extvos.common.exception.ResultException;
+import plus.extvos.common.utils.QuickHash;
 import plus.extvos.common.utils.ThymeleafTemplateUtil;
 
 import javax.crypto.Cipher;
@@ -482,11 +482,19 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
         Assert.notNull(authState, ResultException.internalServerError("invalid authState"));
         if (SESSION_VIA.equals(via)) {
             SessionResult result = getSessionKey(code);
-            authState.setOpenId(result.openId);
+            if (config.getUnion()) {
+                authState.setOpenId(result.unionId);
+            } else {
+                authState.setOpenId(result.openId);
+            }
             authState.setSessionKey(result.sessionKey);
         } else {
             TokenResult result = getAccessToken(code);
-            authState.setOpenId(result.openId);
+            if (config.getUnion()) {
+                authState.setOpenId(result.unionId);
+            } else {
+                authState.setOpenId(result.openId);
+            }
             authState.setExtraInfo(result.extraInfo);
         }
         authState.setStatus(OAuthState.ID_PRESENTED);
