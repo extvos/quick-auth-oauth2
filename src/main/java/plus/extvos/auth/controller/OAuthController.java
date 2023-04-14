@@ -401,23 +401,28 @@ public class OAuthController {
         if (null == userInfo) {
             throw ResultException.forbidden("login failed ???");
         }
-        Session session = SecurityUtils.getSubject().getSession();
-        Assert.notNull(session, ResultException.forbidden("not in session"));
-        OAuthState authState = (OAuthState) session.getAttribute(OAuthState.OAUTH_STATE_KEY);
-        Assert.notNull(authState, ResultException.forbidden("not in oauth session"));
-        Assert.notEmpty(authState.getOpenId(), ResultException.forbidden("openId presented in oauth session"));
-        Assert.equals(authState.getStatus(), OAuthState.NEED_REGISTER, ResultException.forbidden("not in NEED_REGISTER state"));
-        OAuthInfo oAuthInfo = openidResolver.register(provider, authState.getOpenId(), userInfo.getUsername(), userInfo.getPassword(), authState.getExtraInfo());
-        Assert.notNull(oAuthInfo, ResultException.serviceUnavailable("create user failed"));
-        Assert.notNull(oAuthInfo.getUserId(), ResultException.serviceUnavailable("create user failed"));
-        authState.setAuthInfo(oAuthInfo);
-        userInfo.setOpenId(oAuthInfo.getOpenId());
-        userInfo.setProvider(provider);
-        userInfo.updateExtraInfo(authState.getExtraInfo());
-        authState.setUserInfo(userInfo);
-        authState.setStatus(OAuthState.LOGGED_IN);
-        session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
-        quickAuthentication.updateUserInfo(userInfo);
+        try {
+            Session session = SecurityUtils.getSubject().getSession();
+            Assert.notNull(session, ResultException.forbidden("not in session"));
+            OAuthState authState = (OAuthState) session.getAttribute(OAuthState.OAUTH_STATE_KEY);
+            Assert.notNull(authState, ResultException.forbidden("not in oauth session"));
+            Assert.notEmpty(authState.getOpenId(), ResultException.forbidden("openId presented in oauth session"));
+            Assert.equals(authState.getStatus(), OAuthState.NEED_REGISTER, ResultException.forbidden("not in NEED_REGISTER state"));
+            OAuthInfo oAuthInfo = openidResolver.register(provider, authState.getOpenId(), userInfo.getUsername(), userInfo.getPassword(), authState.getExtraInfo());
+            Assert.notNull(oAuthInfo, ResultException.serviceUnavailable("create user failed"));
+            Assert.notNull(oAuthInfo.getUserId(), ResultException.serviceUnavailable("create user failed"));
+            authState.setAuthInfo(oAuthInfo);
+            userInfo.setOpenId(oAuthInfo.getOpenId());
+            userInfo.setProvider(provider);
+            userInfo.updateExtraInfo(authState.getExtraInfo());
+            authState.setUserInfo(userInfo);
+            authState.setStatus(OAuthState.LOGGED_IN);
+            session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
+            quickAuthentication.updateUserInfo(userInfo);
+        } catch (Exception e) {
+            SecurityUtils.getSubject().logout();
+            throw ResultException.internalServerError("attache user open account failed");
+        }
         return Result.data(userInfo).success();
     }
 

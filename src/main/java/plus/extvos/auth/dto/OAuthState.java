@@ -15,8 +15,9 @@ public class OAuthState implements Serializable {
      * 1: oauth redirect(or QR-Code scanned and accessed)
      * 2: authorized accepted, waiting for openid.
      * 3: access token acquired, openid presented.
-     * 4: need to register
-     * 5: login finished
+     * 4: userinfo presented
+     * 5: need to register or login to
+     * 6: login finished
      */
     public static final int FAILED = -1;
     public static final int INITIALIZED = 0;
