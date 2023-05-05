@@ -759,37 +759,39 @@ public class OAuthController {
             authInfo = openidResolver.resolve(provider, authState.getOpenId(), null, extraInfo);
         }
 
-        if (null == userInfo && null != authInfo) {
-            userInfo = quickAuthService.getUserById(authInfo.getUserId(), true);
-        }
-
-        // get userInfo by phone number if userInfo not presented and phone is ready
-        if (null == userInfo && Validator.notEmpty(extraInfo.getOrDefault(OAuthProvider.PHONE_NUMBER_KEY, "").toString())) {
-            userInfo = quickAuthService.getUserByPhone(extraInfo.get(OAuthProvider.PHONE_NUMBER_KEY).toString(), false);
-        }
-
-        if (quickAuthConfig.isPhoneRequired()) {
-            if (Validator.isEmpty(extraInfo.getOrDefault(OAuthProvider.PHONE_NUMBER_KEY, "").toString())) {
-                // phone required
-                log.debug("registerSession:> phone required, check phone number ...");
-                return Result.data(authState.asResult()).success();
+        if (null == userInfo) {
+            if (null != authInfo) {
+                userInfo = quickAuthService.getUserById(authInfo.getUserId(), true);
+            } else if (Validator.notEmpty(extraInfo.getOrDefault(OAuthProvider.PHONE_NUMBER_KEY, "").toString())) {
+                userInfo = quickAuthService.getUserByPhone(extraInfo.get(OAuthProvider.PHONE_NUMBER_KEY).toString(), true);
             }
         }
+        // get userInfo by phone number if userInfo not presented and phone is ready
+//        if (null == userInfo && Validator.notEmpty(extraInfo.getOrDefault(OAuthProvider.PHONE_NUMBER_KEY, "").toString())) {
+//            userInfo = quickAuthService.getUserByPhone(extraInfo.get(OAuthProvider.PHONE_NUMBER_KEY).toString(), false);
+//        }
+
+//        if (quickAuthConfig.isPhoneRequired()) {
+//            if (Validator.isEmpty(extraInfo.getOrDefault(OAuthProvider.PHONE_NUMBER_KEY, "").toString())) {
+//                // phone required
+//                log.debug("registerSession:> phone required, check phone number ...");
+//                return Result.data(authState.asResult()).success();
+//            }
+//        }
 
 
         // try to register user if userInfo not presented
         if (null == userInfo) {
-
-            if (!Validator.isEmpty(extraInfo.getOrDefault(OAuthProvider.PHONE_NUMBER_KEY, "").toString())) {
-                String phone = extraInfo.getOrDefault(OAuthProvider.PHONE_NUMBER_KEY, "").toString();
-                userInfo = quickAuthService.getUserByPhone(phone, true);
-            }
-            if (null == userInfo) {
-                authState.setStatus(OAuthState.NEED_REGISTER);
-                session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
-                return Result.data(authState.asResult()).success();
-            }
-            authInfo = openidResolver.register(provider, authState.getOpenId(), userInfo.getUsername(), userInfo.getPassword(), extraInfo);
+//            if (!Validator.isEmpty(extraInfo.getOrDefault(OAuthProvider.PHONE_NUMBER_KEY, "").toString())) {
+//                String phone = extraInfo.getOrDefault(OAuthProvider.PHONE_NUMBER_KEY, "").toString();
+//                userInfo = quickAuthService.getUserByPhone(phone, true);
+//            }
+//            if (null == userInfo) {
+            authState.setStatus(OAuthState.NEED_REGISTER);
+            session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
+            return Result.data(authState.asResult()).success();
+//            }
+//            authInfo = openidResolver.register(provider, authState.getOpenId(), userInfo.getUsername(), userInfo.getPassword(), extraInfo);
 //            if (!autoRegister) {
 //                log.debug("registerSession:> not allow to auto register, return status 403");
 //                throw ResultException.forbidden("not allowed to login");
@@ -800,10 +802,14 @@ public class OAuthController {
 //            }
         } else {
             log.debug("registerSession:> resolved used: {}, update ...", userInfo.getUsername());
-            authInfo = openidResolver.update(provider, authState.getOpenId(), userInfo.getUserId(), extraInfo);
-        }
-        if (authInfo != null && authInfo.getExtraInfo() != null) {
-            extraInfo.putAll(authInfo.getExtraInfo());
+            if (null != authInfo) {
+                authInfo = openidResolver.update(provider, authState.getOpenId(), userInfo.getUserId(), extraInfo);
+                extraInfo.putAll(authInfo.getExtraInfo());
+            } else {
+                authInfo = new OAuthInfo(userInfo.getUserId(), authState.getOpenId(), provider);
+                authInfo.setExtraInfo(extraInfo);
+            }
+
         }
         authState.setUserInfo(userInfo);
         authState.setAuthInfo(authInfo);
@@ -814,8 +820,15 @@ public class OAuthController {
         LoginResult loginResult = quickAuthentication.loginImplicitly(userInfo, false);
         if (null == loginResult.getUserInfo()) {
             throw ResultException.conflict("try to login failed");
+        } else {
+            authInfo.setUserId(userInfo.getUserId());
+            authState.setOpenId(authState.getOpenId());
+            authState.setStatus(OAuthState.LOGGED_IN);
+//            authState.setExtraInfo(authInfo.getExtraInfo());
+            session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
+            return Result.data(authState.asResult()).success();
         }
 
-        return Result.data(authState.asResult()).success();
+//        return Result.data(authState.asResult()).success();
     }
 }
