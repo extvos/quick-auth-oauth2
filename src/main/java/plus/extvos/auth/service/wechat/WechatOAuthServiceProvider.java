@@ -75,40 +75,6 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
             OAuthProvider.COUNTRY_CODE_KEY + ":" + "countryCode",
     };
 
-    static class SessionResult {
-        String openId;
-        String unionId;
-        String sessionKey;
-
-        public SessionResult(String openId, String unionId, String sessionKey) {
-            this.openId = openId;
-            this.unionId = unionId;
-            this.sessionKey = sessionKey;
-        }
-    }
-
-    static class TokenResult {
-        private String openId;
-        private String unionId;
-        private String accessToken;
-        private String refreshToken;
-        private Integer expiresIn;
-        private Map<String, Object> extraInfo;
-
-
-        public TokenResult() {
-
-        }
-
-        public TokenResult(String openId, String unionId, String accessToken, String refreshToken, Integer expiresIn) {
-            this.openId = openId;
-            this.unionId = unionId;
-            this.accessToken = accessToken;
-            this.refreshToken = refreshToken;
-            this.expiresIn = expiresIn;
-        }
-    }
-
 
     @Override
     public Object notify(Map<String, Object> params, byte[] body) throws ResultException {
