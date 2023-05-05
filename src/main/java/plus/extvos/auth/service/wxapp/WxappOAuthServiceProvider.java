@@ -1,4 +1,4 @@
-package plus.extvos.auth.service.wechat;
+package plus.extvos.auth.service.wxapp;
 
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
@@ -31,18 +31,18 @@ import java.util.*;
  * @author Mingcai SHEN
  */
 @Service
-public class WechatOAuthServiceProvider implements OAuthProvider {
+public class WxappOAuthServiceProvider implements OAuthProvider {
 
-    private static final Logger log = LoggerFactory.getLogger(WechatOAuthServiceProvider.class);
-    public static final String SLUG = "wechat";
+    private static final Logger log = LoggerFactory.getLogger(WxappOAuthServiceProvider.class);
+    public static final String SLUG = "wxapp";
 
     private static final String SESSION_VIA = "SESSIONKEY";
 
     @Autowired
-    private WechatConfig config;
+    private WxappConfig config;
 
     @Autowired
-    public WechatOAuthServiceProvider(WechatConfig cfg) {
+    public WxappOAuthServiceProvider(WxappConfig cfg) {
         config = cfg;
     }
 
@@ -53,7 +53,7 @@ public class WechatOAuthServiceProvider implements OAuthProvider {
 
     @Override
     public String getName() {
-        return "微信公众号登录";
+        return "微信小程序登录";
     }
 
     private static final String[] keyMap = new String[]{
