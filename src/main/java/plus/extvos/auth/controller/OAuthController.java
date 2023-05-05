@@ -776,11 +776,20 @@ public class OAuthController {
             }
         }
 
+
         // try to register user if userInfo not presented
         if (null == userInfo) {
-            authState.setStatus(OAuthState.NEED_REGISTER);
-            session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
-            return Result.data(authState.asResult()).success();
+
+            if (!Validator.isEmpty(extraInfo.getOrDefault(OAuthProvider.PHONE_NUMBER_KEY, "").toString())) {
+                String phone = extraInfo.getOrDefault(OAuthProvider.PHONE_NUMBER_KEY, "").toString();
+                userInfo = quickAuthService.getUserByPhone(phone, true);
+            }
+            if (null == userInfo) {
+                authState.setStatus(OAuthState.NEED_REGISTER);
+                session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
+                return Result.data(authState.asResult()).success();
+            }
+            authInfo = openidResolver.register(provider, authState.getOpenId(), userInfo.getUsername(), userInfo.getPassword(), extraInfo);
 //            if (!autoRegister) {
 //                log.debug("registerSession:> not allow to auto register, return status 403");
 //                throw ResultException.forbidden("not allowed to login");
