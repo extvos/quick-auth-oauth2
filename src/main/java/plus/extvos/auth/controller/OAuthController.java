@@ -778,15 +778,17 @@ public class OAuthController {
 
         // try to register user if userInfo not presented
         if (null == userInfo) {
-            if (!autoRegister) {
-                log.debug("registerSession:> not allow to auto register, return status 403");
-                throw ResultException.forbidden("not allowed to login");
-//                return Result.data(authState.asResult()).success();
-            } else {
-                log.debug("registerSession:> auto register user ...");
-                authInfo = openidResolver.register(provider, authState.getOpenId(), username, password, extraInfo);
-                userInfo = quickAuthService.getUserById(authInfo.getUserId(), true);
-            }
+            authState.setStatus(OAuthState.NEED_REGISTER);
+            session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
+            return Result.data(authState.asResult()).success();
+//            if (!autoRegister) {
+//                log.debug("registerSession:> not allow to auto register, return status 403");
+//                throw ResultException.forbidden("not allowed to login");
+//            } else {
+//                log.debug("registerSession:> auto register user ...");
+//                authInfo = openidResolver.register(provider, authState.getOpenId(), username, password, extraInfo);
+//                userInfo = quickAuthService.getUserById(authInfo.getUserId(), true);
+//            }
         } else {
             log.debug("registerSession:> resolved used: {}, update ...", userInfo.getUsername());
             authInfo = openidResolver.update(provider, authState.getOpenId(), userInfo.getUserId(), extraInfo);
