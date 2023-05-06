@@ -787,9 +787,18 @@ public class OAuthController {
 //                userInfo = quickAuthService.getUserByPhone(phone, true);
 //            }
 //            if (null == userInfo) {
-            authState.setStatus(OAuthState.NEED_REGISTER);
-            session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
-            return Result.data(authState.asResult()).success();
+            if (!autoRegister) {
+                authState.setStatus(OAuthState.NEED_REGISTER);
+                session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
+                return Result.data(authState.asResult()).success();
+            } else {
+                username = extraInfo.getOrDefault(OAuthProvider.PHONE_NUMBER_KEY, authState.getOpenId()).toString();
+                password = QuickHash.md5().hash(authState.getOpenId()).hex();
+                Serializable userId = quickAuthService.createUserInfo(username, password, (short) 1, null, null, extraInfo);
+                userInfo = quickAuthService.getUserById(userId, true);
+                authInfo = openidResolver.register(provider, authState.getOpenId(), username, password, extraInfo);
+            }
+
 //            }
 //            authInfo = openidResolver.register(provider, authState.getOpenId(), userInfo.getUsername(), userInfo.getPassword(), extraInfo);
 //            if (!autoRegister) {
