@@ -420,6 +420,7 @@ public class OAuthController {
             session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
             quickAuthentication.updateUserInfo(userInfo);
         } catch (Exception e) {
+            log.error("attache user open account failed:> ", e);
             SecurityUtils.getSubject().logout();
             throw ResultException.internalServerError("attache user open account failed");
         }
