@@ -812,25 +812,26 @@ public class OAuthController {
 //            }
         } else {
             log.debug("registerSession:> resolved used: {}, update ...", userInfo.getUsername());
-            if (null != authInfo) {
-                authInfo = openidResolver.update(provider, authState.getOpenId(), userInfo.getUserId(), extraInfo);
-                extraInfo.putAll(authInfo.getExtraInfo());
-            } else {
-                authInfo = new OAuthInfo(userInfo.getUserId(), authState.getOpenId(), provider);
-                authInfo.setExtraInfo(extraInfo);
-            }
-
         }
-        authState.setUserInfo(userInfo);
-        authState.setAuthInfo(authInfo);
-        authState.setExtraInfo(extraInfo);
-
         // trying to login
         log.debug("registerSession:> try to logging user '{}' ... ", userInfo.getUsername());
         LoginResult loginResult = quickAuthentication.loginImplicitly(userInfo, false);
         if (null == loginResult.getUserInfo()) {
             throw ResultException.conflict("try to login failed");
         } else {
+//            if (null != authInfo) {
+//                authInfo = openidResolver.update(provider, authState.getOpenId(), userInfo.getUserId(), extraInfo);
+//                extraInfo.putAll(authInfo.getExtraInfo());
+//            } else {
+//                authInfo = new OAuthInfo(userInfo.getUserId(), authState.getOpenId(), provider);
+//                authInfo.setExtraInfo(extraInfo);
+//            }
+            authInfo = openidResolver.update(provider, authState.getOpenId(), userInfo.getUserId(), extraInfo);
+            extraInfo.putAll(authInfo.getExtraInfo());
+            authState.setUserInfo(userInfo);
+            authState.setAuthInfo(authInfo);
+            authState.setExtraInfo(extraInfo);
+
             authInfo.setUserId(userInfo.getUserId());
             authState.setOpenId(authState.getOpenId());
             authState.setStatus(OAuthState.LOGGED_IN);
