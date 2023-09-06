@@ -319,9 +319,9 @@ public class OAuthController {
                 }
             }
         }
-        if (authState.getUserInfo() != null) {
-            authState.getUserInfo().setPassword("");
-        }
+//        if (authState.getUserInfo() != null) {
+//            authState.getUserInfo().setPassword("");
+//        }
         return Result.data(authState.asResult()).success();
     }
 
