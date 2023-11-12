@@ -413,6 +413,7 @@ public class OAuthController {
             Assert.notNull(oAuthInfo.getUserId(), ResultException.serviceUnavailable("create user failed"));
             authState.setAuthInfo(oAuthInfo);
             userInfo.setOpenId(oAuthInfo.getOpenId());
+            userInfo.setUnionId(oAuthInfo.getUnionId());
             userInfo.setProvider(provider);
             userInfo.updateExtraInfo(authState.getExtraInfo());
             authState.setUserInfo(userInfo);
@@ -514,6 +515,7 @@ public class OAuthController {
         }
         authState.setAuthInfo(oAuthInfo);
         userInfo.setOpenId(oAuthInfo.getOpenId());
+        userInfo.setUnionId(oAuthInfo.getUnionId());
         userInfo.setProvider(provider);
         authState.setUserInfo(userInfo);
         session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
@@ -620,6 +622,7 @@ public class OAuthController {
                     userInfo = quickAuthService.fillUserInfo(userInfo);
                     userInfo.setProvider(provider);
                     userInfo.setOpenId(authInfo.getOpenId());
+                    userInfo.setUnionId(authInfo.getUnionId());
                     userInfo.updateExtraInfo(authInfo.getExtraInfo());
                     authState.setUserInfo(userInfo);
                     authState.setAuthInfo(authInfo);
@@ -652,6 +655,7 @@ public class OAuthController {
         UserInfo userInfo = quickAuthService.getUserById(authInfo.getUserId(), true);
         userInfo.setProvider(provider);
         userInfo.setOpenId(authInfo.getOpenId());
+        userInfo.setUnionId(authInfo.getUnionId());
         userInfo.setExtraInfo(authInfo.getExtraInfo());
         authState.setUserInfo(userInfo);
         authState.setAuthInfo(authInfo);
