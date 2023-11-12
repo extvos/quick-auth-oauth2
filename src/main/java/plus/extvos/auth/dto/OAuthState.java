@@ -44,6 +44,8 @@ public class OAuthState implements Serializable {
 
     private String openId;
 
+    private String unionId;
+
     private String accessToken;
 
     private String refreshToken;
@@ -59,7 +61,7 @@ public class OAuthState implements Serializable {
     }
 
     public OAuthResult asResult() {
-        OAuthResult ret = new OAuthResult(userInfo == null ? null : userInfo.getUserId(), sessionId, userInfo == null ? "" : userInfo.getUsername(), openId, status);
+        OAuthResult ret = new OAuthResult(userInfo == null ? null : userInfo.getUserId(), sessionId, userInfo == null ? "" : userInfo.getUsername(), openId, unionId, status);
         if (extraInfo != null) {
             ret.setExtraInfo(extraInfo);
         }
@@ -105,6 +107,14 @@ public class OAuthState implements Serializable {
 
     public void setOpenId(String openId) {
         this.openId = openId;
+    }
+
+    public String getUnionId() {
+        return unionId;
+    }
+
+    public void setUnionId(String unionId) {
+        this.unionId = unionId;
     }
 
     public Map<String, Object> getExtraInfo() {
@@ -173,6 +183,7 @@ public class OAuthState implements Serializable {
                 ", redirectUri='" + redirectUri + '\'' +
                 ", failureUri='" + failureUri + '\'' +
                 ", openId='" + openId + '\'' +
+                ", unionId='" + unionId + '\'' +
                 ", accessToken='" + accessToken + '\'' +
                 ", refreshToken='" + refreshToken + '\'' +
                 ", sessionKey='" + sessionKey + '\'' +

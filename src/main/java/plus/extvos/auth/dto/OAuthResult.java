@@ -11,6 +11,7 @@ public class OAuthResult  implements Serializable {
     private Serializable userId;
     private String username;
     private String openId;
+    private String unionId;
     private Map<String, Object> extraInfo;
 
     /**
@@ -42,6 +43,14 @@ public class OAuthResult  implements Serializable {
         this.openId = openId;
     }
 
+    public String getUnionId() {
+        return unionId;
+    }
+
+    public void setUnionId(String unionId) {
+        this.unionId = unionId;
+    }
+
     public int getStatus() {
         return status;
     }
@@ -58,11 +67,12 @@ public class OAuthResult  implements Serializable {
         this.userId = userId;
     }
 
-    public OAuthResult(Serializable id, String session, String username, String openId, int status) {
+    public OAuthResult(Serializable id, String session, String username, String openId, String unionId, int status) {
         this.userId = id;
         this.session = session;
         this.username = username;
         this.openId = openId;
+        this.unionId = unionId;
         this.status = status;
     }
 

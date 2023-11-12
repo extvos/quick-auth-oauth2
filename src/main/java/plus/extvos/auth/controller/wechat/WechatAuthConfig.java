@@ -56,8 +56,8 @@ public class WechatAuthConfig {
     @Value("${quick.auth.wechat.token:quick-wechat}")
     private String token;
 
-    @Value("${quick.auth.wechat.union:false}")
-    private Boolean union;
+//    @Value("${quick.auth.wechat.union:false}")
+//    private Boolean union;
 
     public String getEndpoint() {
         return endpoint;
@@ -87,11 +87,11 @@ public class WechatAuthConfig {
         return token;
     }
 
-    public Boolean getUnion() {
-        return union != null && union;
-    }
-
-    public void setUnion(Boolean union) {
-        this.union = union;
-    }
+//    public Boolean getUnion() {
+//        return union != null && union;
+//    }
+//
+//    public void setUnion(Boolean union) {
+//        this.union = union;
+//    }
 }

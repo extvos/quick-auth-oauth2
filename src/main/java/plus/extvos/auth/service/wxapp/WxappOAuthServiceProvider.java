@@ -448,19 +448,23 @@ public class WxappOAuthServiceProvider implements OAuthProvider {
         Assert.notNull(authState, ResultException.internalServerError("invalid authState"));
         if (SESSION_VIA.equals(via)) {
             SessionResult result = getSessionKey(code);
-            if (config.getUnion()) {
-                authState.setOpenId(result.unionId);
-            } else {
-                authState.setOpenId(result.openId);
-            }
+//            if (config.getUnion()) {
+//                authState.setOpenId(result.unionId);
+//            } else {
+//                authState.setOpenId(result.openId);
+//            }
+            authState.setUnionId(result.unionId);
+            authState.setOpenId(result.openId);
             authState.setSessionKey(result.sessionKey);
         } else {
             TokenResult result = getAccessToken(code);
-            if (config.getUnion()) {
-                authState.setOpenId(result.unionId);
-            } else {
-                authState.setOpenId(result.openId);
-            }
+//            if (config.getUnion()) {
+//                authState.setOpenId(result.unionId);
+//            } else {
+//                authState.setOpenId(result.openId);
+//            }
+            authState.setUnionId(result.unionId);
+            authState.setOpenId(result.openId);
             authState.setExtraInfo(result.extraInfo);
         }
         authState.setStatus(OAuthState.ID_PRESENTED);

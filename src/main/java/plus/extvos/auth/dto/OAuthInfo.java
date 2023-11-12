@@ -13,30 +13,35 @@ public class OAuthInfo implements Serializable {
     private Serializable userId;
     private String provider;
     private String openId;
+
+    private String unionId;
     private Map<String, Object> extraInfo;
 
     public OAuthInfo() {
 
     }
 
-    public OAuthInfo(Serializable userId, String provider, String openId) {
+    public OAuthInfo(Serializable userId, String provider, String openId, String unionId) {
         this.userId = userId;
         this.provider = provider;
         this.openId = openId;
+        this.unionId = unionId;
     }
 
-    public OAuthInfo(Serializable id, Serializable userId, String provider, String openId) {
+    public OAuthInfo(Serializable id, Serializable userId, String provider, String openId, String unionId) {
         this.id = id;
         this.userId = userId;
         this.provider = provider;
         this.openId = openId;
+        this.unionId = unionId;
     }
 
-    public OAuthInfo(Serializable id, Serializable userId, String provider, String openId, Map<String, Object> extraInfo) {
+    public OAuthInfo(Serializable id, Serializable userId, String provider, String openId, String unionId, Map<String, Object> extraInfo) {
         this.id = id;
         this.userId = userId;
         this.provider = provider;
         this.openId = openId;
+        this.unionId = unionId;
         this.extraInfo = extraInfo;
     }
 
@@ -72,6 +77,14 @@ public class OAuthInfo implements Serializable {
         this.openId = openId;
     }
 
+    public String getUnionId() {
+        return unionId;
+    }
+
+    public void setUnionId(String unionId) {
+        this.unionId = unionId;
+    }
+
     public Map<String, Object> getExtraInfo() {
         return extraInfo;
     }
@@ -84,6 +97,7 @@ public class OAuthInfo implements Serializable {
         UserInfo ui = new UserInfo(userId, username, password, cellphone, email, extraInfo);
         ui.setProvider(provider);
         ui.setOpenId(openId);
+        ui.setUnionId(unionId);
         return ui;
     }
 
@@ -94,6 +108,7 @@ public class OAuthInfo implements Serializable {
                 ", userId=" + userId +
                 ", provider='" + provider + '\'' +
                 ", openId='" + openId + '\'' +
+                ", unionId='" + unionId + '\'' +
                 ", extraInfo=" + extraInfo +
                 '}';
     }

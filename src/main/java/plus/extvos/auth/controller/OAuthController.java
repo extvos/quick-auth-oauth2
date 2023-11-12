@@ -408,7 +408,7 @@ public class OAuthController {
             Assert.notNull(authState, ResultException.forbidden("not in oauth session"));
             Assert.notEmpty(authState.getOpenId(), ResultException.forbidden("openId presented in oauth session"));
             Assert.equals(authState.getStatus(), OAuthState.NEED_REGISTER, ResultException.forbidden("not in NEED_REGISTER state"));
-            OAuthInfo oAuthInfo = openidResolver.register(provider, authState.getOpenId(), userInfo.getUsername(), userInfo.getPassword(), authState.getExtraInfo());
+            OAuthInfo oAuthInfo = openidResolver.register(provider, authState.getOpenId(), authState.getUnionId(), userInfo.getUsername(), userInfo.getPassword(), authState.getExtraInfo());
             Assert.notNull(oAuthInfo, ResultException.serviceUnavailable("create user failed"));
             Assert.notNull(oAuthInfo.getUserId(), ResultException.serviceUnavailable("create user failed"));
             authState.setAuthInfo(oAuthInfo);
@@ -501,7 +501,7 @@ public class OAuthController {
         }
         Serializable userId = quickAuthService.createUserInfo(username, password, status, perms, roles, params);
         Assert.notNull(userId, ResultException.serviceUnavailable("create user failed"));
-        OAuthInfo oAuthInfo = openidResolver.register(provider, authState.getOpenId(), username, password, params);
+        OAuthInfo oAuthInfo = openidResolver.register(provider, authState.getOpenId(), authState.getUnionId(), username, password, params);
         Assert.notNull(oAuthInfo.getUserId(), ResultException.serviceUnavailable("create user failed"));
         UserInfo userInfo = new UserInfo(userId, username, password, phoneNumber, email);
         if (Validator.notEmpty(params)) {
@@ -598,7 +598,7 @@ public class OAuthController {
         session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
         OAuthInfo authInfo = null;
         try {
-            authInfo = openidResolver.resolve(provider, openId, currentUserId, extraInfo);
+            authInfo = openidResolver.resolve(provider, openId, authState.getUnionId(), currentUserId, extraInfo);
         } catch (ResultException e) {
             authState.setStatus(OAuthState.FAILED);
             authState.setError(e.getMessage());
@@ -612,7 +612,7 @@ public class OAuthController {
         if (null == authInfo) {  // Not getting user info, need to register...
             if (null != currentUserId) { // Attach to existing user
                 try {
-                    authInfo = openidResolver.register(provider, openId, currentUsername, null, extraInfo);
+                    authInfo = openidResolver.register(provider, openId, authState.getUnionId(), currentUsername, null, extraInfo);
                     authState.setExtraInfo(authInfo.getExtraInfo());
                     authState.setStatus(OAuthState.LOGGED_IN);
                     session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
@@ -647,7 +647,7 @@ public class OAuthController {
             }
         } else if (Validator.notEmpty(extraInfo)) {
             log.debug("authorized:> userInfo of {} resolved as {}, try to update...", openId, authInfo.getUserId());
-            authInfo = openidResolver.update(provider, openId, authInfo.getUserId(), extraInfo);
+            authInfo = openidResolver.update(provider, openId, authState.getUnionId(), authInfo.getUserId(), extraInfo);
         }
         UserInfo userInfo = quickAuthService.getUserById(authInfo.getUserId(), true);
         userInfo.setProvider(provider);
@@ -747,7 +747,7 @@ public class OAuthController {
         Map<String, Object> extraInfo = authState.getExtraInfo();
 
         if (authState.getStatus() >= OAuthState.LOGGED_IN) {
-            openidResolver.update(provider, authState.getOpenId(), authInfo == null ? null : authInfo.getUserId(), extraInfo);
+            openidResolver.update(provider, authState.getOpenId(), authState.getUnionId(), authInfo == null ? null : authInfo.getUserId(), extraInfo);
             return Result.data(authState.asResult()).success();
         }
         // TODO: register user .... ???
@@ -757,7 +757,7 @@ public class OAuthController {
 
         // get userInfo by openId if userInfo not presented
         if (null == authInfo) {
-            authInfo = openidResolver.resolve(provider, authState.getOpenId(), null, extraInfo);
+            authInfo = openidResolver.resolve(provider, authState.getOpenId(), authState.getUnionId(), null, extraInfo);
         }
 
         if (null == userInfo) {
@@ -797,7 +797,7 @@ public class OAuthController {
                 password = QuickHash.md5().hash(authState.getOpenId()).hex();
                 Serializable userId = quickAuthService.createUserInfo(username, password, (short) 1, null, null, extraInfo);
                 userInfo = quickAuthService.getUserById(userId, true);
-                authInfo = openidResolver.register(provider, authState.getOpenId(), username, password, extraInfo);
+                authInfo = openidResolver.register(provider, authState.getOpenId(), authState.getUnionId(), username, password, extraInfo);
             }
 
 //            }
@@ -826,7 +826,7 @@ public class OAuthController {
 //                authInfo = new OAuthInfo(userInfo.getUserId(), authState.getOpenId(), provider);
 //                authInfo.setExtraInfo(extraInfo);
 //            }
-            authInfo = openidResolver.update(provider, authState.getOpenId(), userInfo.getUserId(), extraInfo);
+            authInfo = openidResolver.update(provider, authState.getOpenId(), authState.getUnionId(), userInfo.getUserId(), extraInfo);
             extraInfo.putAll(authInfo.getExtraInfo());
             authState.setUserInfo(userInfo);
             authState.setAuthInfo(authInfo);

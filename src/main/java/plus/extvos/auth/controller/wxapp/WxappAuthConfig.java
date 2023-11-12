@@ -56,8 +56,8 @@ public class WxappAuthConfig {
     @Value("${quick.auth.wxapp.token:quick-wechat}")
     private String token;
 
-    @Value("${quick.auth.wxapp.union:false}")
-    private Boolean union;
+//    @Value("${quick.auth.wxapp.union:false}")
+//    private Boolean union;
 
     public String getEndpoint() {
         return endpoint;
@@ -87,11 +87,11 @@ public class WxappAuthConfig {
         return token;
     }
 
-    public Boolean getUnion() {
-        return union != null && union;
-    }
-
-    public void setUnion(Boolean union) {
-        this.union = union;
-    }
+//    public Boolean getUnion() {
+//        return union != null && union;
+//    }
+//
+//    public void setUnion(Boolean union) {
+//        this.union = union;
+//    }
 }
