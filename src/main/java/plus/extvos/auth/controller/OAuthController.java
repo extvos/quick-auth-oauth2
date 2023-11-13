@@ -594,13 +594,13 @@ public class OAuthController {
         }
         Assert.notEmpty(authState.getOpenId(), ResultException.serviceUnavailable("openid not provided"));
         Map<String, Object> extraInfo = authState.getExtraInfo();
-        String openId = authState.getOpenId();
-        authState.setOpenId(openId);
+//        String openId = authState.getOpenId();
+//        authState.setOpenId(openId);
         authState.setStatus(OAuthState.ID_PRESENTED);
         session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
         OAuthInfo authInfo = null;
         try {
-            authInfo = openidResolver.resolve(provider, openId, authState.getUnionId(), currentUserId, extraInfo);
+            authInfo = openidResolver.resolve(provider, authState.getOpenId(), authState.getUnionId(), currentUserId, extraInfo);
         } catch (ResultException e) {
             authState.setStatus(OAuthState.FAILED);
             authState.setError(e.getMessage());
@@ -614,15 +614,15 @@ public class OAuthController {
         if (null == authInfo) {  // Not getting user info, need to register...
             if (null != currentUserId) { // Attach to existing user
                 try {
-                    authInfo = openidResolver.register(provider, openId, authState.getUnionId(), currentUsername, null, extraInfo);
+                    authInfo = openidResolver.register(provider, authState.getOpenId(), authState.getUnionId(), currentUsername, null, extraInfo);
                     authState.setExtraInfo(authInfo.getExtraInfo());
                     authState.setStatus(OAuthState.LOGGED_IN);
                     session.setAttribute(OAuthState.OAUTH_STATE_KEY, authState);
                     UserInfo userInfo = authState.getUserInfo();
                     userInfo = quickAuthService.fillUserInfo(userInfo);
                     userInfo.setProvider(provider);
-                    userInfo.setOpenId(authInfo.getOpenId());
-                    userInfo.setUnionId(authInfo.getUnionId());
+                    userInfo.setOpenId(authState.getOpenId());
+                    userInfo.setUnionId(authState.getUnionId());
                     userInfo.updateExtraInfo(authInfo.getExtraInfo());
                     authState.setUserInfo(userInfo);
                     authState.setAuthInfo(authInfo);
@@ -649,13 +649,13 @@ public class OAuthController {
                 return Result.data(authState.asResult()).success();
             }
         } else if (Validator.notEmpty(extraInfo)) {
-            log.debug("authorized:> userInfo of {} resolved as {}, try to update...", openId, authInfo.getUserId());
-            authInfo = openidResolver.update(provider, openId, authState.getUnionId(), authInfo.getUserId(), extraInfo);
+            log.debug("authorized:> userInfo of {} resolved as {}, try to update...", authState.getOpenId(), authInfo.getUserId());
+            authInfo = openidResolver.update(provider, authState.getOpenId(), authState.getUnionId(), authInfo.getUserId(), extraInfo);
         }
         UserInfo userInfo = quickAuthService.getUserById(authInfo.getUserId(), true);
         userInfo.setProvider(provider);
-        userInfo.setOpenId(authInfo.getOpenId());
-        userInfo.setUnionId(authInfo.getUnionId());
+        userInfo.setOpenId(authState.getOpenId());
+        userInfo.setUnionId(authState.getUnionId());
         userInfo.setExtraInfo(authInfo.getExtraInfo());
         authState.setUserInfo(userInfo);
         authState.setAuthInfo(authInfo);
